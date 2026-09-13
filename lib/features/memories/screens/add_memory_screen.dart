@@ -491,15 +491,41 @@ class _AddMemoryScreenState extends ConsumerState<AddMemoryScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                IconButton.filledTonal(
-                  onPressed: _openMapLocationPicker,
-                  icon: const Icon(Icons.map_rounded),
-                  tooltip: 'Pick location on Map',
-                  style: IconButton.styleFrom(
-                    padding: const EdgeInsets.all(14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                  ),
+                Row(
+                  children: [
+                    // GPS detection button
+                    IconButton.filledTonal(
+                      onPressed: _detectCurrentLocation,
+                      icon: _isDetectingGps
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.my_location_rounded),
+                      tooltip: _isDetectingGps ? 'Detecting location...' : 'Detect current location',
+                      style: IconButton.styleFrom(
+                        padding: const EdgeInsets.all(14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Map picker button
+                    IconButton.filledTonal(
+                      onPressed: _openMapLocationPicker,
+                      icon: const Icon(Icons.map_rounded),
+                      tooltip: 'Pick location on Map',
+                      style: IconButton.styleFrom(
+                        padding: const EdgeInsets.all(14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
