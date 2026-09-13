@@ -124,7 +124,9 @@ final timelineGroupsProvider = Provider<List<TimelineYearGroup>>((ref) {
 
   return allAsync.maybeWhen(
     data: (memories) {
-      var filtered = memories;
+      // Sort newest first
+      var filtered = [...memories]
+        ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
 
       if (query.isNotEmpty) {
         filtered = filtered.where((m) {
@@ -143,8 +145,9 @@ final timelineGroupsProvider = Provider<List<TimelineYearGroup>>((ref) {
         filtered = filtered.where((m) => m.mood == moodFilter).toList();
       }
 
-      // Group by Year -> Month
-      final Map<String, Map<String, List<MemoryItem>>> grouped = {};
+      // Group by Year -> Month (preserve sorted order — insertion order = newest first)
+      final Map<String, Map<String, List<MemoryItem>>> grouped =
+          {};
 
       for (final memory in filtered) {
         final year = DateFormatter.formatYear(memory.dateTime);

@@ -39,6 +39,7 @@ class LocationPickerSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      enableDrag: false,
       builder: (context) => LocationPickerSheet(
         initialLatitude: initialLatitude,
         initialLongitude: initialLongitude,
@@ -52,7 +53,8 @@ class LocationPickerSheet extends StatefulWidget {
 }
 
 class _LocationPickerSheetState extends State<LocationPickerSheet> {
-  late MapController _mapController;
+  final MapController _mapController = MapController();
+  bool _mapReady = false;
   late LatLng _selectedPosition;
   late TextEditingController _nameController;
   bool _isLoadingGps = false;
@@ -69,7 +71,6 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
   @override
   void initState() {
     super.initState();
-    _mapController = MapController();
     _selectedPosition = LatLng(
       widget.initialLatitude ?? AppConstants.defaultLatitude,
       widget.initialLongitude ?? AppConstants.defaultLongitude,
@@ -77,7 +78,8 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
     _nameController =
         TextEditingController(text: widget.initialLocationName ?? '');
 
-    // If no initial location was passed, automatically detect user's location
+    // Auto-detect GPS only when no starting position provided.
+    // Must wait for map to be ready (onMapReady) before calling move().
     if (widget.initialLatitude == null || widget.initialLongitude == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _detectCurrentLocation(silent: true);
@@ -95,29 +97,47 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
   Future<void> _detectCurrentLocation({bool silent = false}) async {
     setState(() => _isLoadingGps = true);
 
-    final result = await LocationService.getCurrentLocation();
+    try {
+      final result = await LocationService.getCurrentLocation(promptSettings: !silent);
 
-    if (!mounted) return;
-    setState(() => _isLoadingGps = false);
+      if (!mounted) return;
 
-    if (result != null) {
-      final pos = LatLng(result.latitude, result.longitude);
-      setState(() {
-        _selectedPosition = pos;
-        _nameController.text = result.locationName;
-      });
-      _mapController.move(pos, 15.0);
-    } else if (!silent) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Could not acquire GPS position. Please check location permissions and GPS settings.',
+      if (result != null) {
+        final pos = LatLng(result.latitude, result.longitude);
+        setState(() {
+          _selectedPosition = pos;
+          _nameController.text = result.locationName;
+        });
+        if (_mapReady) _mapController.move(pos, 15.0);
+      } else if (!silent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Could not acquire GPS position. Please check location permissions and GPS settings.',
+            ),
+            backgroundColor: AppColors.favorite,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          backgroundColor: AppColors.favorite,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+        );
+      }
+    } catch (_) {
+      if (!silent && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Unable to access location services right now.',
+            ),
+            backgroundColor: AppColors.favorite,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingGps = false);
+      }
     }
   }
 
@@ -126,16 +146,24 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
       _selectedPosition = position;
     });
 
-    // Auto reverse geocode on tap
-    final place = await LocationService.getPlaceName(
-      position.latitude,
-      position.longitude,
-    );
+    // Auto reverse geocode on tap with safe fallback
+    try {
+      final place = await LocationService.getPlaceName(
+        position.latitude,
+        position.longitude,
+      );
 
-    if (!mounted) return;
-    setState(() {
-      _nameController.text = place;
-    });
+      if (!mounted) return;
+      setState(() {
+        _nameController.text = place;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _nameController.text =
+            'Spot (${position.latitude.toStringAsFixed(3)}, ${position.longitude.toStringAsFixed(3)})';
+      });
+    }
   }
 
   void _selectQuickLocation(Map<String, dynamic> loc) {
@@ -144,7 +172,7 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
       _selectedPosition = pos;
       _nameController.text = loc['name'] as String;
     });
-    _mapController.move(pos, 14.0);
+    if (_mapReady) _mapController.move(pos, 14.0);
   }
 
   @override
@@ -284,15 +312,22 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                       initialCenter: _selectedPosition,
                       initialZoom: 14.0,
                       onTap: _onMapTapped,
+                      onMapReady: () => setState(() => _mapReady = true),
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.all,
+                        enableMultiFingerGestureRace: true,
+                      ),
                     ),
                     children: [
                       TileLayer(
-                        urlTemplate: isDark
-                            ? AppConstants.mapDarkTileUrl
-                            : AppConstants.mapLightTileUrl,
-                        subdomains: AppConstants.mapSubdomains,
-                        fallbackUrl: AppConstants.osmFallbackTileUrl,
+                        urlTemplate: AppConstants.mapTileUrl,
                         userAgentPackageName: AppConstants.mapPackageUserAgent,
+                        tileBuilder: isDark
+                            ? (context, tileWidget, tile) => ColorFiltered(
+                                  colorFilter: const ColorFilter.matrix(AppConstants.darkMapMatrix),
+                                  child: tileWidget,
+                                )
+                            : null,
                       ),
                       MarkerLayer(
                         markers: [

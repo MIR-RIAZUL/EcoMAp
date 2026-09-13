@@ -32,8 +32,8 @@ class FavoritesScreen extends ConsumerWidget {
               icon: Icons.favorite_border_rounded,
               title: 'No Favorites Yet',
               description:
-                  'Memories that hold a special place in your heart will appear here. Tap the heart icon on any memory to favorite it!',
-              actionLabel: 'Explore Memories',
+                  'Memories that hold a special place in your heart will appear here. Tap the heart icon on any memory to mark it as a favorite!',
+              actionLabel: 'Add a Memory',
               onAction: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(

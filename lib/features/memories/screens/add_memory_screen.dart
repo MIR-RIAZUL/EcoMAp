@@ -187,41 +187,57 @@ class _AddMemoryScreenState extends ConsumerState<AddMemoryScreen> {
 
   Future<void> _detectCurrentLocation() async {
     setState(() => _isDetectingGps = true);
-    final result = await LocationService.getCurrentLocation();
-    if (!mounted) return;
-    setState(() => _isDetectingGps = false);
+    try {
+      final result = await LocationService.getCurrentLocation(promptSettings: true);
+      if (!mounted) return;
 
-    if (result != null) {
-      setState(() {
-        _latitude = result.latitude;
-        _longitude = result.longitude;
-        _locationController.text = result.locationName;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-              const SizedBox(width: 8),
-              Expanded(child: Text('Location found: ${result.locationName}')),
-            ],
+      if (result != null) {
+        setState(() {
+          _latitude = result.latitude;
+          _longitude = result.longitude;
+          _locationController.text = result.locationName;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Location found: ${result.locationName}')),
+              ],
+            ),
+            backgroundColor: AppColors.tertiary,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          backgroundColor: AppColors.tertiary,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-    } else {
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+                'Could not detect GPS position. Please check location permissions and GPS.'),
+            backgroundColor: AppColors.favorite,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-              'Could not detect GPS position. Please check location permissions.'),
+              'Location services unavailable. You can also pick a spot directly on the map.'),
           backgroundColor: AppColors.favorite,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isDetectingGps = false);
+      }
     }
   }
 
@@ -495,14 +511,13 @@ class _AddMemoryScreenState extends ConsumerState<AddMemoryScreen> {
                   children: [
                     // GPS detection button
                     IconButton.filledTonal(
-                      onPressed: _detectCurrentLocation,
+                      onPressed: _isDetectingGps ? null : _detectCurrentLocation,
                       icon: _isDetectingGps
                           ? const SizedBox(
-                              width: 16,
-                              height: 16,
+                              width: 18,
+                              height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
                               ),
                             )
                           : const Icon(Icons.my_location_rounded),

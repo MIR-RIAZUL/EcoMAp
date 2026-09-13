@@ -37,6 +37,7 @@ class _MemoryDetailsScreenState extends ConsumerState<MemoryDetailsScreen> {
     });
 
     final repo = ref.read(memoryRepositoryProvider);
+    // toggleFavorite receives the CURRENT (old) value so it knows what to flip
     await repo.toggleFavorite(_memory.id, !newStatus);
   }
 
@@ -379,9 +380,17 @@ class _MemoryDetailsScreenState extends ConsumerState<MemoryDetailsScreen> {
                               ),
                               children: [
                                 TileLayer(
-                                  urlTemplate: AppConstants.osmFallbackTileUrl,
+                                  urlTemplate: AppConstants.mapTileUrl,
                                   userAgentPackageName:
                                       AppConstants.mapPackageUserAgent,
+                                  tileBuilder: isDark
+                                      ? (context, tileWidget, tile) =>
+                                          ColorFiltered(
+                                            colorFilter: const ColorFilter.matrix(
+                                                AppConstants.darkMapMatrix),
+                                            child: tileWidget,
+                                          )
+                                      : null,
                                 ),
                                 MarkerLayer(
                                   markers: [

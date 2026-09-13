@@ -19,15 +19,11 @@ class MemoryMapScreen extends ConsumerStatefulWidget {
 }
 
 class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
-  late MapController _mapController;
+  final MapController _mapController = MapController();
+  bool _mapReady = false;
+  bool _initialFitDone = false;
   bool _onlyFavorites = false;
   Mood? _filterMood;
-
-  @override
-  void initState() {
-    super.initState();
-    _mapController = MapController();
-  }
 
   @override
   void dispose() {
@@ -50,6 +46,7 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
   }
 
   void _recenterOnMemories(List<MemoryItem> memoriesWithLocation) {
+    if (!_mapReady) return;
     if (memoriesWithLocation.isEmpty) {
       _mapController.move(
         const LatLng(AppConstants.defaultLatitude, AppConstants.defaultLongitude),
@@ -76,6 +73,12 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
       if (m.longitude! > maxLng) maxLng = m.longitude!;
     }
 
+    // Guard against identical / near-identical coordinates to avoid divide-by-zero bounds
+    if ((maxLat - minLat).abs() < 0.0001 && (maxLng - minLng).abs() < 0.0001) {
+      _mapController.move(LatLng(minLat, minLng), 14.0);
+      return;
+    }
+
     final bounds = LatLngBounds(
       LatLng(minLat, minLng),
       LatLng(maxLat, maxLng),
@@ -84,7 +87,8 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
     _mapController.fitCamera(
       CameraFit.bounds(
         bounds: bounds,
-        padding: const EdgeInsets.all(50),
+        padding: const EdgeInsets.all(60),
+        maxZoom: 16.0,
       ),
     );
   }
@@ -94,77 +98,132 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final allMemoriesAsync = ref.watch(allMemoriesStreamProvider);
 
+    // Auto-center camera when memories stream emits for the first time
+    ref.listen<AsyncValue<List<MemoryItem>>>(allMemoriesStreamProvider, (prev, next) {
+      if (next.hasValue && !_initialFitDone && _mapReady) {
+        final loc = (next.value ?? []).where((m) => m.hasLocation).toList();
+        if (loc.isNotEmpty) {
+          _initialFitDone = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _recenterOnMemories(loc);
+          });
+        }
+      }
+    });
+
+    // Compute filtered list once — used by both markers and empty-state banner.
+    final allMemories = allMemoriesAsync.value ?? [];
+    var localized = allMemories.where((m) => m.hasLocation).toList();
+    if (_onlyFavorites) localized = localized.where((m) => m.isFavorite).toList();
+    if (_filterMood != null) localized = localized.where((m) => m.mood == _filterMood).toList();
+
+    final initialCenter = localized.isNotEmpty
+        ? LatLng(localized.first.latitude!, localized.first.longitude!)
+        : const LatLng(AppConstants.defaultLatitude, AppConstants.defaultLongitude);
+    final initialZoom = localized.isNotEmpty ? 13.0 : 4.0;
+
     return Scaffold(
       body: Stack(
         children: [
-          // Map Canvas
-          allMemoriesAsync.when(
-            data: (allMemories) {
-              var localized = allMemories.where((m) => m.hasLocation).toList();
-
-              if (_onlyFavorites) {
-                localized = localized.where((m) => m.isFavorite).toList();
-              }
-
-              if (_filterMood != null) {
-                localized = localized.where((m) => m.mood == _filterMood).toList();
-              }
-
-              final markers = localized.map((memory) {
-                return Marker(
-                  point: LatLng(memory.latitude!, memory.longitude!),
-                  width: 48,
-                  height: 48,
-                  child: GestureDetector(
-                    onTap: () => _onMarkerTapped(memory),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: memory.mood.color,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: memory.mood.color.withAlpha(140),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
+          // ── Map Canvas ────────────────────────────────────────────────
+          // Stable ValueKey prevents FlutterMap from being torn down on
+          // every setState, which would reset the camera position.
+          FlutterMap(
+            key: const ValueKey('memory_map'),
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: initialCenter,
+              initialZoom: initialZoom,
+              minZoom: 2.0,
+              maxZoom: 18.0,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all,
+                enableMultiFingerGestureRace: true,
+              ),
+              onMapReady: () {
+                setState(() => _mapReady = true);
+                if (!_initialFitDone) {
+                  final all = ref.read(allMemoriesStreamProvider).value ?? [];
+                  final loc = all.where((m) => m.hasLocation).toList();
+                  if (loc.isNotEmpty) {
+                    _initialFitDone = true;
+                    _recenterOnMemories(loc);
+                  }
+                }
+              },
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: AppConstants.mapTileUrl,
+                userAgentPackageName: AppConstants.mapPackageUserAgent,
+                tileBuilder: isDark
+                    ? (context, tileWidget, tile) => ColorFiltered(
+                          colorFilter: const ColorFilter.matrix(AppConstants.darkMapMatrix),
+                          child: tileWidget,
+                        )
+                    : null,
+              ),
+              if (allMemoriesAsync.hasValue)
+                MarkerLayer(
+                  markers: localized.map((memory) {
+                    return Marker(
+                      point: LatLng(memory.latitude!, memory.longitude!),
+                      width: 52,
+                      height: 52,
+                      alignment: Alignment.topCenter,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _onMarkerTapped(memory),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: memory.mood.color,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: memory.mood.color.withAlpha(160),
+                                blurRadius: 12,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                        ],
+                          alignment: Alignment.center,
+                          child: Text(
+                            memory.mood.emoji,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                        ),
                       ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        memory.mood.emoji,
-                        style: const TextStyle(fontSize: 20),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList();
-
-              final initialCenter = localized.isNotEmpty
-                  ? LatLng(localized.first.latitude!, localized.first.longitude!)
-                  : const LatLng(
-                      AppConstants.defaultLatitude, AppConstants.defaultLongitude);
-
-              return FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(
-                  initialCenter: initialCenter,
-                  initialZoom: localized.isNotEmpty ? 13.0 : 4.0,
+                    );
+                  }).toList(),
+                  rotate: false,
                 ),
-                children: [
-                  TileLayer(
-                    // Use appropriate tile URL based on theme (light/dark) and provide subdomains.
-                    urlTemplate: isDark ? AppConstants.mapDarkTileUrl : AppConstants.mapLightTileUrl,
-                    subdomains: AppConstants.mapSubdomains,
-                    userAgentPackageName: AppConstants.mapPackageUserAgent,
-                  ),
-                  MarkerLayer(markers: markers),
-                ],
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Map Error: $e')),
+            ],
           ),
+
+          if (allMemoriesAsync.isLoading)
+            const Center(child: CircularProgressIndicator()),
+
+          if (allMemoriesAsync.hasError)
+            Positioned(
+              top: 80,
+              left: 20,
+              right: 20,
+              child: Material(
+                borderRadius: BorderRadius.circular(14),
+                color: Colors.red.shade700,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Text(
+                    'Error: ${allMemoriesAsync.error}',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ),
+            ),
 
           // Top Header & Filter Chips Bar
           SafeArea(
@@ -199,12 +258,12 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
                             color: AppColors.primary, size: 20),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
+                            const Text(
                               'Memory Map',
                               style: TextStyle(
                                 fontSize: 17,
@@ -212,8 +271,10 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
                               ),
                             ),
                             Text(
-                              'Explore moments across the globe',
-                              style: TextStyle(
+                              localized.isEmpty
+                                  ? 'No pinned memories yet'
+                                  : '${localized.length} memory pin${localized.length == 1 ? '' : 's'}',
+                              style: const TextStyle(
                                 fontSize: 11,
                                 color: AppColors.lightTextSecondary,
                               ),
@@ -221,13 +282,11 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
                           ],
                         ),
                       ),
-                      // Recenter button
                       IconButton(
                         icon: const Icon(Icons.my_location_rounded),
                         tooltip: 'Fit all memories',
                         onPressed: () {
-                          final all = allMemoriesAsync.value ?? [];
-                          final loc = all.where((m) => m.hasLocation).toList();
+                          final loc = allMemories.where((m) => m.hasLocation).toList();
                           _recenterOnMemories(loc);
                         },
                       ),
@@ -293,60 +352,52 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
             ),
           ),
 
-          // No memories with location notice
-          allMemoriesAsync.maybeWhen(
-            data: (memories) {
-              final localized = memories.where((m) => m.hasLocation).toList();
-              if (localized.isEmpty) {
-                return Positioned(
-                  bottom: 24,
-                  left: 20,
-                  right: 20,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: (isDark ? AppColors.darkSurface : AppColors.lightSurface)
-                          .withAlpha(240),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 16,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
+          // ── Empty-state banner ────────────────────────────────────────
+          if (allMemoriesAsync.hasValue && localized.isEmpty)
+            Positioned(
+              bottom: 24,
+              left: 20,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                decoration: BoxDecoration(
+                  color: (isDark ? AppColors.darkSurface : AppColors.lightSurface)
+                      .withAlpha(240),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 16,
+                      offset: Offset(0, 4),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.info_outline_rounded,
-                            color: AppColors.primary),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            'No memories with coordinates yet. When adding a memory, tap "Pick on Map" to see pins here!',
-                            style: TextStyle(fontSize: 12),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded,
+                        color: AppColors.primary),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'No pinned memories. Tap "Pick on Map" when adding a memory to see pins here!',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const AddMemoryScreen(),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const AddMemoryScreen(),
-                              ),
-                            );
-                          },
-                          child: const Text('Add Now'),
-                        ),
-                      ],
+                        );
+                      },
+                      child: const Text('Add Now'),
                     ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-            orElse: () => const SizedBox.shrink(),
-          ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
