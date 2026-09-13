@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/location_service.dart';
 
 class LocationPickerResult {
   final double latitude;
@@ -54,6 +55,7 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
   late MapController _mapController;
   late LatLng _selectedPosition;
   late TextEditingController _nameController;
+  bool _isLoadingGps = false;
 
   final List<Map<String, dynamic>> _quickLocations = [
     {'name': 'Paris, France', 'lat': 48.8566, 'lng': 2.3522},
@@ -74,6 +76,13 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
     );
     _nameController =
         TextEditingController(text: widget.initialLocationName ?? '');
+
+    // If no initial location was passed, automatically detect user's location
+    if (widget.initialLatitude == null || widget.initialLongitude == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _detectCurrentLocation(silent: true);
+      });
+    }
   }
 
   @override
@@ -83,13 +92,49 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
     super.dispose();
   }
 
-  void _onMapTapped(TapPosition tapPosition, LatLng position) {
+  Future<void> _detectCurrentLocation({bool silent = false}) async {
+    setState(() => _isLoadingGps = true);
+
+    final result = await LocationService.getCurrentLocation();
+
+    if (!mounted) return;
+    setState(() => _isLoadingGps = false);
+
+    if (result != null) {
+      final pos = LatLng(result.latitude, result.longitude);
+      setState(() {
+        _selectedPosition = pos;
+        _nameController.text = result.locationName;
+      });
+      _mapController.move(pos, 15.0);
+    } else if (!silent) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Could not acquire GPS position. Please check location permissions and GPS settings.',
+          ),
+          backgroundColor: AppColors.favorite,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
+  void _onMapTapped(TapPosition tapPosition, LatLng position) async {
     setState(() {
       _selectedPosition = position;
-      if (_nameController.text.trim().isEmpty) {
-        _nameController.text =
-            'Spot at ${position.latitude.toStringAsFixed(3)}, ${position.longitude.toStringAsFixed(3)}';
-      }
+    });
+
+    // Auto reverse geocode on tap
+    final place = await LocationService.getPlaceName(
+      position.latitude,
+      position.longitude,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _nameController.text = place;
     });
   }
 
@@ -107,7 +152,7 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.88,
+      height: MediaQuery.of(context).size.height * 0.90,
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -116,7 +161,7 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
         children: [
           // Drag handle
           Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            margin: const EdgeInsets.only(top: 12, bottom: 6),
             width: 44,
             height: 5,
             decoration: BoxDecoration(
@@ -144,12 +189,24 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                 ),
                 const SizedBox(width: 12),
                 const Expanded(
-                  child: Text(
-                    'Pick Memory Location',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Set Memory Location',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Tap map or use one-tap auto GPS',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.lightTextSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 IconButton(
@@ -160,9 +217,40 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
             ),
           ),
 
+          // One-Tap "Detect Current Location" Automated Bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    onPressed: _isLoadingGps ? null : () => _detectCurrentLocation(),
+                    icon: _isLoadingGps
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.my_location_rounded, size: 18),
+                    label: Text(
+                      _isLoadingGps ? 'Locating GPS...' : 'Use My Current Location',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Quick City Presets
           SizedBox(
-            height: 38,
+            height: 36,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -171,11 +259,12 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
               itemBuilder: (context, index) {
                 final loc = _quickLocations[index];
                 return ActionChip(
-                  avatar: const Icon(Icons.location_city_rounded, size: 14),
+                  avatar: const Icon(Icons.location_city_rounded, size: 13),
                   label: Text(
                     loc['name'] as String,
-                    style: const TextStyle(fontSize: 12),
+                    style: const TextStyle(fontSize: 11),
                   ),
+                  padding: EdgeInsets.zero,
                   onPressed: () => _selectQuickLocation(loc),
                 );
               },
@@ -183,41 +272,94 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
           ),
           const SizedBox(height: 10),
 
-          // Map view
+          // Modern Map Canvas
           Expanded(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               child: Stack(
                 children: [
                   FlutterMap(
                     mapController: _mapController,
                     options: MapOptions(
                       initialCenter: _selectedPosition,
-                      initialZoom: 13.0,
+                      initialZoom: 14.0,
                       onTap: _onMapTapped,
                     ),
                     children: [
                       TileLayer(
-                        urlTemplate: AppConstants.osmTileUrl,
+                        urlTemplate: isDark
+                            ? AppConstants.mapDarkTileUrl
+                            : AppConstants.mapLightTileUrl,
+                        subdomains: AppConstants.mapSubdomains,
+                        fallbackUrl: AppConstants.osmFallbackTileUrl,
                         userAgentPackageName: AppConstants.mapPackageUserAgent,
                       ),
                       MarkerLayer(
                         markers: [
                           Marker(
                             point: _selectedPosition,
-                            width: 50,
-                            height: 50,
-                            child: const Icon(
-                              Icons.location_on_rounded,
-                              size: 46,
-                              color: AppColors.primary,
+                            width: 60,
+                            height: 60,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Pulsing halo circle
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withAlpha(40),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2.5,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Colors.black38,
+                                        blurRadius: 8,
+                                        offset: Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.place_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  // Hint banner at top
+
+                  // Floating GPS Re-center button on map
+                  Positioned(
+                    right: 14,
+                    bottom: 14,
+                    child: FloatingActionButton.small(
+                      heroTag: 'picker_gps_fab',
+                      backgroundColor:
+                          isDark ? AppColors.darkSurface : Colors.white,
+                      foregroundColor: AppColors.primary,
+                      onPressed: () => _detectCurrentLocation(),
+                      tooltip: 'Snap to current location',
+                      child: const Icon(Icons.gps_fixed_rounded, size: 20),
+                    ),
+                  ),
+
+                  // Tap anywhere hint banner
                   Positioned(
                     top: 10,
                     left: 16,
@@ -244,9 +386,9 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Tap anywhere on map to drop pin',
+                              'Tap anywhere to reposition pin with auto place name',
                               style: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.w500),
+                                  fontSize: 11, fontWeight: FontWeight.w500),
                             ),
                           ),
                         ],
@@ -285,7 +427,7 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -293,7 +435,7 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                         onPressed: () {
                           final name = _nameController.text.trim().isNotEmpty
                               ? _nameController.text.trim()
-                              : 'Lat: ${_selectedPosition.latitude.toStringAsFixed(4)}, Lng: ${_selectedPosition.longitude.toStringAsFixed(4)}';
+                              : 'Location at ${_selectedPosition.latitude.toStringAsFixed(3)}, ${_selectedPosition.longitude.toStringAsFixed(3)}';
                           Navigator.of(context).pop(
                             LocationPickerResult(
                               latitude: _selectedPosition.latitude,

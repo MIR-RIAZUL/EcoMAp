@@ -153,7 +153,9 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: AppConstants.osmTileUrl,
+                    // Use appropriate tile URL based on theme (light/dark) and provide subdomains.
+                    urlTemplate: isDark ? AppConstants.mapDarkTileUrl : AppConstants.mapLightTileUrl,
+                    subdomains: AppConstants.mapSubdomains,
                     userAgentPackageName: AppConstants.mapPackageUserAgent,
                   ),
                   MarkerLayer(markers: markers),

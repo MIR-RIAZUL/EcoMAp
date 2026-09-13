@@ -379,7 +379,7 @@ class _MemoryDetailsScreenState extends ConsumerState<MemoryDetailsScreen> {
                               ),
                               children: [
                                 TileLayer(
-                                  urlTemplate: AppConstants.osmTileUrl,
+                                  urlTemplate: AppConstants.osmFallbackTileUrl,
                                   userAgentPackageName:
                                       AppConstants.mapPackageUserAgent,
                                 ),

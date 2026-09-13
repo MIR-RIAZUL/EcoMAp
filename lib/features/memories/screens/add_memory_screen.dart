@@ -7,6 +7,7 @@ import '../../../core/constants/mood_types.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/file_helper.dart';
+import '../../../core/utils/location_service.dart';
 import '../models/memory_item.dart';
 import '../providers/database_provider.dart';
 import '../widgets/location_picker_sheet.dart';
@@ -37,8 +38,9 @@ class _AddMemoryScreenState extends ConsumerState<AddMemoryScreen> {
   double? _latitude;
   double? _longitude;
   late List<String> _tags;
-  late bool _isFavorite;
   bool _isSaving = false;
+  bool _isFavorite = false;
+  bool _isDetectingGps = false;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -180,6 +182,46 @@ class _AddMemoryScreenState extends ConsumerState<AddMemoryScreen> {
         _longitude = result.longitude;
         _locationController.text = result.locationName;
       });
+    }
+  }
+
+  Future<void> _detectCurrentLocation() async {
+    setState(() => _isDetectingGps = true);
+    final result = await LocationService.getCurrentLocation();
+    if (!mounted) return;
+    setState(() => _isDetectingGps = false);
+
+    if (result != null) {
+      setState(() {
+        _latitude = result.latitude;
+        _longitude = result.longitude;
+        _locationController.text = result.locationName;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Location found: ${result.locationName}')),
+            ],
+          ),
+          backgroundColor: AppColors.tertiary,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+              'Could not detect GPS position. Please check location permissions.'),
+          backgroundColor: AppColors.favorite,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
     }
   }
 
