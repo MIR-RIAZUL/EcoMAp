@@ -6,6 +6,7 @@ class EmptyStateView extends StatelessWidget {
   final String title;
   final String description;
   final String? actionLabel;
+  final IconData? actionIcon;
   final VoidCallback? onAction;
 
   const EmptyStateView({
@@ -14,6 +15,7 @@ class EmptyStateView extends StatelessWidget {
     required this.title,
     required this.description,
     this.actionLabel,
+    this.actionIcon = Icons.add_rounded,
     this.onAction,
   });
 
@@ -71,7 +73,7 @@ class EmptyStateView extends StatelessWidget {
               const SizedBox(height: 28),
               FilledButton.icon(
                 onPressed: onAction,
-                icon: const Icon(Icons.add_rounded),
+                icon: Icon(actionIcon ?? Icons.add_rounded),
                 label: Text(actionLabel!),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),

@@ -9,6 +9,7 @@ import '../models/memory_item.dart';
 import '../providers/database_provider.dart';
 import '../providers/memory_providers.dart';
 import '../widgets/memory_card.dart';
+import '../widgets/memory_search_bar.dart';
 import '../widgets/stats_overview_card.dart';
 import 'add_memory_screen.dart';
 import 'memory_details_screen.dart';
@@ -70,7 +71,9 @@ class HomeScreen extends ConsumerWidget {
     final allMemoriesAsync = ref.watch(allMemoriesStreamProvider);
     final favoriteMemoriesAsync = ref.watch(favoriteMemoriesStreamProvider);
     final stats = ref.watch(memoryStatsProvider);
-    final recentMemories = ref.watch(recentMemoriesProvider);
+    final filterState = ref.watch(memoryFilterProvider);
+    final filteredMemories = ref.watch(filteredMemoriesProvider);
+    final isFilteringOrSearching = filterState.isFilteringOrSearching;
 
     return Scaffold(
       body: SafeArea(
@@ -79,7 +82,7 @@ class HomeScreen extends ConsumerWidget {
             // Top App Bar / Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -141,178 +144,342 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
 
-            // Stats Overview Card
-            SliverToBoxAdapter(
-              child: StatsOverviewCard(
-                stats: stats,
-                onFavoritesTap: onNavigateToFavorites,
-              ),
+            // UPDATE 2: Search Bar at the top of Memories screen
+            const SliverToBoxAdapter(
+              child: MemorySearchBar(),
             ),
 
-            // Quick Add Hero Banner
-            SliverToBoxAdapter(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const AddMemoryScreen(),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withAlpha(90),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(50),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.add_rounded,
-                            color: Colors.white,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Record a New Memory',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Capture location, photos, mood & thoughts',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          color: Colors.white70,
-                          size: 16,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Favorite Memories Carousel Section
-            favoriteMemoriesAsync.when(
-              data: (favorites) {
-                if (favorites.isEmpty) return const SliverToBoxAdapter();
-                return SliverToBoxAdapter(
+            // Active Filters Strip & Result Count (when searching or filtering)
+            if (isFilteringOrSearching)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Row(
-                              children: [
-                                Icon(Icons.favorite_rounded,
-                                    color: AppColors.favorite, size: 18),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Cherished Favorites',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: -0.3,
-                                  ),
+                            if (filterState.mood != null) ...[
+                              Chip(
+                                avatar: Text(
+                                  filterState.mood!.emoji,
+                                  style: const TextStyle(fontSize: 13),
                                 ),
-                              ],
-                            ),
-                            TextButton(
-                              onPressed: onNavigateToFavorites,
-                              child: const Text('See All'),
+                                label: Text(filterState.mood!.label),
+                                onDeleted: () {
+                                  ref
+                                      .read(memoryFilterProvider.notifier)
+                                      .update(
+                                        (s) => s.copyWith(clearMood: true),
+                                      );
+                                },
+                                deleteIconColor: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.lightTextSecondary,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            if (filterState.favoritesOnly) ...[
+                              Chip(
+                                avatar: const Text('⭐',
+                                    style: TextStyle(fontSize: 12)),
+                                label: const Text('Favorites'),
+                                onDeleted: () {
+                                  ref
+                                      .read(memoryFilterProvider.notifier)
+                                      .update(
+                                        (s) => s.copyWith(favoritesOnly: false),
+                                      );
+                                },
+                                deleteIconColor: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.lightTextSecondary,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            if (filterState.hasLocationOnly) ...[
+                              Chip(
+                                avatar: const Text('📍',
+                                    style: TextStyle(fontSize: 12)),
+                                label: const Text('With location'),
+                                onDeleted: () {
+                                  ref
+                                      .read(memoryFilterProvider.notifier)
+                                      .update(
+                                        (s) =>
+                                            s.copyWith(hasLocationOnly: false),
+                                      );
+                                },
+                                deleteIconColor: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.lightTextSecondary,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            if (filterState.hasPhotoOnly) ...[
+                              Chip(
+                                avatar: const Text('📷',
+                                    style: TextStyle(fontSize: 12)),
+                                label: const Text('With photo'),
+                                onDeleted: () {
+                                  ref
+                                      .read(memoryFilterProvider.notifier)
+                                      .update(
+                                        (s) => s.copyWith(hasPhotoOnly: false),
+                                      );
+                                },
+                                deleteIconColor: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.lightTextSecondary,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            if (filterState.sortOrder ==
+                                MemorySortOrder.oldestFirst) ...[
+                              Chip(
+                                avatar: const Icon(Icons.arrow_upward_rounded,
+                                    size: 14),
+                                label: const Text('Oldest first'),
+                                onDeleted: () {
+                                  ref
+                                      .read(memoryFilterProvider.notifier)
+                                      .update(
+                                        (s) => s.copyWith(
+                                            sortOrder:
+                                                MemorySortOrder.newestFirst),
+                                      );
+                                },
+                                deleteIconColor: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.lightTextSecondary,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            ActionChip(
+                              avatar: const Icon(Icons.close_rounded, size: 14),
+                              label: const Text('Clear Filters'),
+                              onPressed: () {
+                                ref
+                                    .read(memoryFilterProvider.notifier)
+                                    .state = const MemoryFilterState();
+                              },
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
                             ),
                           ],
                         ),
                       ),
-                      SizedBox(
-                        height: 200,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: favorites.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 12),
-                          itemBuilder: (context, index) {
-                            final memory = favorites[index];
-                            return _buildFavoriteCarouselItem(
-                                context, memory, isDark);
-                          },
+                      const SizedBox(height: 8),
+                      // Small Result Count
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Text(
+                          filteredMemories.length == 1
+                              ? '1 memory found'
+                              : '${filteredMemories.length} memories found',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                );
-              },
-              loading: () => const SliverToBoxAdapter(),
-              error: (_, __) => const SliverToBoxAdapter(),
-            ),
-
-            // Recent Memories Section Header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Recent Memories',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                    if (stats.placesCount > 0)
-                      TextButton.icon(
-                        onPressed: onNavigateToMap,
-                        icon: const Icon(Icons.map_rounded, size: 16),
-                        label: const Text('View on Map'),
-                      ),
-                  ],
                 ),
               ),
-            ),
 
-            // Recent Memories List / Empty State
+            // Overview sections when NOT searching or filtering
+            if (!isFilteringOrSearching) ...[
+              // Stats Overview Card
+              SliverToBoxAdapter(
+                child: StatsOverviewCard(
+                  stats: stats,
+                  onFavoritesTap: onNavigateToFavorites,
+                ),
+              ),
+
+              // Quick Add Hero Banner
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AddMemoryScreen(),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withAlpha(90),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(50),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.add_rounded,
+                              color: Colors.white,
+                              size: 26,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Record a New Memory',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Capture location, photos, mood & thoughts',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            color: Colors.white70,
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Favorite Memories Carousel Section
+              favoriteMemoriesAsync.when(
+                data: (favorites) {
+                  if (favorites.isEmpty) return const SliverToBoxAdapter();
+                  return SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.favorite_rounded,
+                                      color: AppColors.favorite, size: 18),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Cherished Favorites',
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              TextButton(
+                                onPressed: onNavigateToFavorites,
+                                child: const Text('See All'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          height: 200,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: favorites.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 12),
+                            itemBuilder: (context, index) {
+                              final memory = favorites[index];
+                              return _buildFavoriteCarouselItem(
+                                  context, memory, isDark);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                loading: () => const SliverToBoxAdapter(),
+                error: (_, __) => const SliverToBoxAdapter(),
+              ),
+
+              // Memories Section Header
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Memories',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      if (stats.placesCount > 0)
+                        TextButton.icon(
+                          onPressed: onNavigateToMap,
+                          icon: const Icon(Icons.map_rounded, size: 16),
+                          label: const Text('View on Map'),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+
+            // Memories List / Empty State
             allMemoriesAsync.when(
-              data: (memories) {
-                if (memories.isEmpty) {
+              data: (allMemories) {
+                // If there are no memories at all in the database, keep existing empty state
+                if (allMemories.isEmpty) {
                   return SliverToBoxAdapter(
                     child: EmptyStateView(
                       icon: Icons.history_edu_rounded,
@@ -331,10 +498,30 @@ class HomeScreen extends ConsumerWidget {
                   );
                 }
 
+                // If user filtered/searched and no matches found
+                if (filteredMemories.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: EmptyStateView(
+                      icon: Icons.search_off_rounded,
+                      title: 'No memories found',
+                      description:
+                          'Try a different search or clear your filters.',
+                      actionLabel: 'Clear Filters',
+                      actionIcon: Icons.filter_alt_off_rounded,
+                      onAction: () {
+                        ref
+                            .read(memoryFilterProvider.notifier)
+                            .state = const MemoryFilterState();
+                      },
+                    ),
+                  );
+                }
+
+                // Display filtered/sorted memories
                 return SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      final memory = recentMemories[index];
+                      final memory = filteredMemories[index];
                       return MemoryCard(
                         memory: memory,
                         onTap: () {
@@ -352,7 +539,7 @@ class HomeScreen extends ConsumerWidget {
                         },
                       );
                     },
-                    childCount: recentMemories.length,
+                    childCount: filteredMemories.length,
                   ),
                 );
               },

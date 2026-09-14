@@ -26,6 +26,144 @@ final memoryByIdProvider = FutureProvider.family<MemoryItem?, int>((ref, id) {
 final searchQueryProvider = StateProvider<String>((ref) => '');
 final selectedMoodFilterProvider = StateProvider<Mood?>((ref) => null);
 
+// --- UPDATE 2: Search, Filter & Sorting System ---
+
+enum MemorySortOrder {
+  newestFirst,
+  oldestFirst,
+}
+
+class MemoryFilterState {
+  final String searchQuery;
+  final Mood? mood;
+  final bool favoritesOnly;
+  final bool hasLocationOnly;
+  final bool hasPhotoOnly;
+  final MemorySortOrder sortOrder;
+
+  const MemoryFilterState({
+    this.searchQuery = '',
+    this.mood,
+    this.favoritesOnly = false,
+    this.hasLocationOnly = false,
+    this.hasPhotoOnly = false,
+    this.sortOrder = MemorySortOrder.newestFirst,
+  });
+
+  bool get hasActiveFilters =>
+      mood != null ||
+      favoritesOnly ||
+      hasLocationOnly ||
+      hasPhotoOnly;
+
+  bool get isFilteringOrSearching =>
+      hasActiveFilters ||
+      searchQuery.trim().isNotEmpty ||
+      sortOrder != MemorySortOrder.newestFirst;
+
+  int get activeFilterCount {
+    int count = 0;
+    if (mood != null) count++;
+    if (favoritesOnly) count++;
+    if (hasLocationOnly) count++;
+    if (hasPhotoOnly) count++;
+    if (sortOrder != MemorySortOrder.newestFirst) count++;
+    return count;
+  }
+
+  MemoryFilterState copyWith({
+    String? searchQuery,
+    Mood? mood,
+    bool clearMood = false,
+    bool? favoritesOnly,
+    bool? hasLocationOnly,
+    bool? hasPhotoOnly,
+    MemorySortOrder? sortOrder,
+  }) {
+    return MemoryFilterState(
+      searchQuery: searchQuery ?? this.searchQuery,
+      mood: clearMood ? null : (mood ?? this.mood),
+      favoritesOnly: favoritesOnly ?? this.favoritesOnly,
+      hasLocationOnly: hasLocationOnly ?? this.hasLocationOnly,
+      hasPhotoOnly: hasPhotoOnly ?? this.hasPhotoOnly,
+      sortOrder: sortOrder ?? this.sortOrder,
+    );
+  }
+
+  MemoryFilterState resetAll() {
+    return const MemoryFilterState();
+  }
+
+  MemoryFilterState resetFilters() {
+    return MemoryFilterState(
+      searchQuery: searchQuery,
+      sortOrder: MemorySortOrder.newestFirst,
+    );
+  }
+}
+
+final memoryFilterProvider =
+    StateProvider<MemoryFilterState>((ref) => const MemoryFilterState());
+
+// Filtered and sorted memories stream provider
+final filteredMemoriesProvider = Provider<List<MemoryItem>>((ref) {
+  final allAsync = ref.watch(allMemoriesStreamProvider);
+  final filter = ref.watch(memoryFilterProvider);
+
+  return allAsync.maybeWhen(
+    data: (memories) {
+      var result = [...memories];
+
+      // 1. Text Search across Title, Description, Location Name, and Tags
+      final query = filter.searchQuery.trim().toLowerCase();
+      if (query.isNotEmpty) {
+        result = result.where((m) {
+          final titleMatch = m.title.toLowerCase().contains(query);
+          final descMatch =
+              m.description?.toLowerCase().contains(query) ?? false;
+          final locationMatch =
+              m.locationName?.toLowerCase().contains(query) ?? false;
+          final tagMatch =
+              m.tags.any((t) => t.toLowerCase().contains(query));
+          return titleMatch || descMatch || locationMatch || tagMatch;
+        }).toList();
+      }
+
+      // 2. Mood Filter
+      if (filter.mood != null) {
+        result = result.where((m) => m.mood == filter.mood).toList();
+      }
+
+      // 3. Favorites Only
+      if (filter.favoritesOnly) {
+        result = result.where((m) => m.isFavorite).toList();
+      }
+
+      // 4. Has Location Only
+      if (filter.hasLocationOnly) {
+        result = result.where((m) =>
+            m.hasLocation ||
+            (m.locationName != null && m.locationName!.trim().isNotEmpty)).toList();
+      }
+
+      // 5. Has Photo Only
+      if (filter.hasPhotoOnly) {
+        result = result.where((m) => m.hasPhoto).toList();
+      }
+
+      // 6. Sorting
+      if (filter.sortOrder == MemorySortOrder.newestFirst) {
+        result.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+      } else {
+        result.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+      }
+
+      return result;
+    },
+    orElse: () => [],
+  );
+});
+
 // Recent memories (top 5)
 final recentMemoriesProvider = Provider<List<MemoryItem>>((ref) {
   final allAsync = ref.watch(allMemoriesStreamProvider);
