@@ -4,12 +4,18 @@ import 'app_colors.dart';
 class AppTheme {
   static ThemeData get lightTheme {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
+      seedColor: AppColors.primaryBlue,
       brightness: Brightness.light,
-      primary: AppColors.primary,
-      secondary: AppColors.secondary,
+      primary: AppColors.primaryBlue,
+      onPrimary: Colors.white,
+      primaryContainer: AppColors.lightCyan,
+      onPrimaryContainer: AppColors.primaryDeepNavy,
+      secondary: AppColors.brightCyan,
+      onSecondary: AppColors.primaryDeepNavy,
       tertiary: AppColors.tertiary,
       surface: AppColors.lightSurface,
+      onSurface: AppColors.lightTextPrimary,
+      surfaceContainer: AppColors.lightSurfaceVariant,
     );
 
     return ThemeData(
@@ -35,7 +41,7 @@ class AppTheme {
         shadowColor: Colors.black.withAlpha(15),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFFEFE8E1), width: 1),
+          side: const BorderSide(color: AppColors.lightBorder, width: 1),
         ),
       ),
       chipTheme: ChipThemeData(
@@ -54,7 +60,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.lightSurfaceVariant.withAlpha(120),
+        fillColor: AppColors.lightSurfaceVariant,
         contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -62,24 +68,24 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFE8E0D7), width: 1),
+          borderSide: const BorderSide(color: AppColors.lightBorder, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
         ),
-        hintStyle: const TextStyle(color: Color(0xFF9E9289), fontSize: 14),
+        hintStyle: const TextStyle(color: AppColors.lightTextSecondary, fontSize: 14),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.lightSurface,
-        indicatorColor: AppColors.primaryContainer,
+        backgroundColor: Colors.white,
+        indicatorColor: AppColors.lightCyan,
         elevation: 4,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.primary,
+              color: AppColors.primaryBlue,
             );
           }
           return const TextStyle(
@@ -88,24 +94,50 @@ class AppTheme {
             color: AppColors.lightTextSecondary,
           );
         }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: AppColors.primaryBlue);
+          }
+          return const IconThemeData(color: AppColors.lightTextSecondary);
+        }),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryBlue,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primaryBlue,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
       ),
     );
   }
 
   static ThemeData get darkTheme {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
+      seedColor: AppColors.primaryBlue,
       brightness: Brightness.dark,
-      primary: const Color(0xFFFF896F),
-      secondary: AppColors.secondary,
-      tertiary: const Color(0xFF67B4A0),
+      primary: AppColors.brightCyan,
+      onPrimary: AppColors.darkBackground,
+      primaryContainer: const Color(0xFF0D3B66),
+      onPrimaryContainer: AppColors.brightCyan,
+      secondary: AppColors.primaryBlue,
+      onSecondary: Colors.white,
+      tertiary: const Color(0xFF80E5F7),
       surface: AppColors.darkSurface,
+      onSurface: AppColors.darkTextPrimary,
+      surfaceContainer: AppColors.darkSurfaceVariant,
     );
 
     return ThemeData(
@@ -126,12 +158,12 @@ class AppTheme {
         iconTheme: IconThemeData(color: AppColors.darkTextPrimary),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.darkSurface,
+        color: AppColors.darkSurfaceVariant,
         elevation: 2,
         shadowColor: Colors.black.withAlpha(80),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFF2C323B), width: 1),
+          side: const BorderSide(color: AppColors.darkBorder, width: 1),
         ),
       ),
       chipTheme: ChipThemeData(
@@ -158,24 +190,24 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF323843), width: 1),
+          borderSide: const BorderSide(color: AppColors.darkBorder, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFFF896F), width: 2),
+          borderSide: const BorderSide(color: AppColors.brightCyan, width: 2),
         ),
-        hintStyle: const TextStyle(color: Color(0xFF7A838F), fontSize: 14),
+        hintStyle: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 14),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.darkSurface,
-        indicatorColor: const Color(0xFF472118),
+        indicatorColor: const Color(0xFF0E3866),
         elevation: 4,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Color(0xFFFF896F),
+              color: AppColors.brightCyan,
             );
           }
           return const TextStyle(
@@ -184,12 +216,32 @@ class AppTheme {
             color: AppColors.darkTextSecondary,
           );
         }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: AppColors.brightCyan);
+          }
+          return const IconThemeData(color: AppColors.darkTextSecondary);
+        }),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: const Color(0xFFFF7A5C),
-        foregroundColor: Colors.black,
+        backgroundColor: AppColors.brightCyan,
+        foregroundColor: AppColors.darkBackground,
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.brightCyan,
+          foregroundColor: AppColors.darkBackground,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.brightCyan,
+          foregroundColor: AppColors.darkBackground,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
       ),
     );
   }

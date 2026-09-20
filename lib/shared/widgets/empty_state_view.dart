@@ -45,7 +45,7 @@ class EmptyStateView extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 44,
-                color: isDark ? const Color(0xFFFF896F) : AppColors.primary,
+                color: isDark ? AppColors.brightCyan : AppColors.primary,
               ),
             ),
             const SizedBox(height: 24),

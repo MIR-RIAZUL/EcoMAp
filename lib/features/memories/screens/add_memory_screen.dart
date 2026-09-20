@@ -414,8 +414,8 @@ class _AddMemoryScreenState extends ConsumerState<AddMemoryScreen> {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: isDark
-                              ? const Color(0xFF323843)
-                              : const Color(0xFFE8E0D7),
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
                         ),
                       ),
                       child: Row(
@@ -452,8 +452,8 @@ class _AddMemoryScreenState extends ConsumerState<AddMemoryScreen> {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: isDark
-                              ? const Color(0xFF323843)
-                              : const Color(0xFFE8E0D7),
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
                         ),
                       ),
                       child: Row(
@@ -659,7 +659,7 @@ class _AddMemoryScreenState extends ConsumerState<AddMemoryScreen> {
               : AppColors.lightSurfaceVariant.withAlpha(100),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: isDark ? const Color(0xFF333A44) : const Color(0xFFDDD5CB),
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
             style: BorderStyle.solid,
             width: 1.5,
           ),
