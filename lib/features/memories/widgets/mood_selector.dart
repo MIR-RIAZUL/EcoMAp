@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/mood_types.dart';
+import '../../../core/theme/app_colors.dart';
 
 class MoodSelector extends StatelessWidget {
   final Mood selectedMood;
@@ -47,15 +48,15 @@ class MoodSelector extends StatelessWidget {
                     color: isSelected
                         ? mood.getBackgroundColor(isDark)
                         : (isDark
-                            ? const Color(0xFF22262C)
-                            : const Color(0xFFF3EFEA)),
+                            ? AppColors.darkSurfaceVariant
+                            : AppColors.lightSurfaceVariant),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: isSelected
                           ? mood.color
                           : (isDark
-                              ? const Color(0xFF333A44)
-                              : const Color(0xFFE5DDD5)),
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder),
                       width: isSelected ? 2 : 1,
                     ),
                     boxShadow: isSelected
@@ -85,8 +86,8 @@ class MoodSelector extends StatelessWidget {
                           color: isSelected
                               ? mood.color
                               : (isDark
-                                  ? const Color(0xFF9EA7B3)
-                                  : const Color(0xFF6B625B)),
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.lightTextSecondary),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

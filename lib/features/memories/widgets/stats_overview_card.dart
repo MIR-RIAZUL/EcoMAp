@@ -23,12 +23,12 @@ class StatsOverviewCard extends StatelessWidget {
         gradient: LinearGradient(
           colors: isDark
               ? [
-                  const Color(0xFF261D1A),
-                  const Color(0xFF1E2228),
+                  const Color(0xFF0C234E),
+                  const Color(0xFF071A3D),
                 ]
               : [
-                  const Color(0xFFFFF1EB),
-                  const Color(0xFFF9F5F0),
+                  const Color(0xFFE8F4FD),
+                  const Color(0xFFF4F8FC),
                 ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

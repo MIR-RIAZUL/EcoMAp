@@ -178,7 +178,7 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                       color: isDark
-                                          ? const Color(0xFFFF896F)
+                                          ? AppColors.brightCyan
                                           : AppColors.primary,
                                       letterSpacing: 0.5,
                                     ),

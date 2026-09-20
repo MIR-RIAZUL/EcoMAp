@@ -333,8 +333,8 @@ class _MemoryDetailsScreenState extends ConsumerState<MemoryDetailsScreen> {
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
                           color: isDark
-                              ? const Color(0xFF333A44)
-                              : const Color(0xFFECE4DC),
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
                         ),
                       ),
                       child: Text(
@@ -475,8 +475,8 @@ class _MemoryDetailsScreenState extends ConsumerState<MemoryDetailsScreen> {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isDark
-                                  ? const Color(0xFF333A44)
-                                  : const Color(0xFFE5DDD3),
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder,
                             ),
                           ),
                           child: Text(
@@ -485,7 +485,7 @@ class _MemoryDetailsScreenState extends ConsumerState<MemoryDetailsScreen> {
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: isDark
-                                  ? const Color(0xFF7CD4BF)
+                                  ? AppColors.brightCyan
                                   : AppColors.tertiary,
                             ),
                           ),

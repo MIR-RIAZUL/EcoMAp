@@ -66,8 +66,8 @@ class _MemorySearchBarState extends ConsumerState<MemorySearchBar> {
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: isDark
-                      ? const Color(0xFF2E343D)
-                      : const Color(0xFFE5DDD3),
+                      ? AppColors.darkBorder
+                      : AppColors.lightBorder,
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -160,8 +160,8 @@ class _MemorySearchBarState extends ConsumerState<MemorySearchBar> {
                     color: hasActiveFilter
                         ? AppColors.primary
                         : (isDark
-                            ? const Color(0xFF2E343D)
-                            : const Color(0xFFE5DDD3)),
+                            ? AppColors.darkBorder
+                            : AppColors.lightBorder),
                   ),
                   boxShadow: [
                     BoxShadow(

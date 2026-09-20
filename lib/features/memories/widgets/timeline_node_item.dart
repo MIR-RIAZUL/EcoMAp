@@ -34,7 +34,7 @@ class TimelineNodeItem extends StatelessWidget {
                 Container(
                   width: 2.5,
                   height: 16,
-                  color: isDark ? const Color(0xFF333A44) : const Color(0xFFDDD5CC),
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                 ),
                 // Mood Circle
                 Container(
@@ -65,7 +65,7 @@ class TimelineNodeItem extends StatelessWidget {
                 Expanded(
                   child: Container(
                     width: isLast ? 0 : 2.5,
-                    color: isDark ? const Color(0xFF333A44) : const Color(0xFFDDD5CC),
+                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                   ),
                 ),
               ],
@@ -81,9 +81,7 @@ class TimelineNodeItem extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
                   side: BorderSide(
-                    color: isDark
-                        ? const Color(0xFF2C323B)
-                        : const Color(0xFFEFE6DD),
+                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                     width: 1,
                   ),
                 ),
@@ -197,7 +195,7 @@ class TimelineNodeItem extends StatelessWidget {
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
                                         color: isDark
-                                            ? const Color(0xFF7CD4BF)
+                                            ? AppColors.brightCyan
                                             : AppColors.tertiary,
                                       ),
                                     ),

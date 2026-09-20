@@ -28,7 +28,7 @@ class MemoryCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(22),
         side: BorderSide(
-          color: isDark ? const Color(0xFF2A2E35) : const Color(0xFFEEE6DD),
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
           width: 1,
         ),
       ),
@@ -184,8 +184,8 @@ class MemoryCard extends StatelessWidget {
                               horizontal: 9, vertical: 4),
                           decoration: BoxDecoration(
                             color: isDark
-                                ? const Color(0xFF282D35)
-                                : const Color(0xFFF1ECE5),
+                                ? AppColors.darkSurfaceVariant
+                                : AppColors.lightSurfaceVariant,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -195,7 +195,7 @@ class MemoryCard extends StatelessWidget {
                                 Icons.place_rounded,
                                 size: 14,
                                 color: isDark
-                                    ? const Color(0xFFFF896F)
+                                    ? AppColors.brightCyan
                                     : AppColors.primary,
                               ),
                               const SizedBox(width: 4),
@@ -234,7 +234,7 @@ class MemoryCard extends StatelessWidget {
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: isDark
-                                      ? const Color(0xFF7CD4BF)
+                                      ? AppColors.brightCyan
                                       : AppColors.tertiary,
                                 ),
                               ),

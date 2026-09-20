@@ -52,7 +52,7 @@ class MemoryPreviewSheet extends StatelessWidget {
           ),
         ],
         border: Border.all(
-          color: isDark ? const Color(0xFF2C323C) : const Color(0xFFE8E0D7),
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
           width: 1,
         ),
       ),
