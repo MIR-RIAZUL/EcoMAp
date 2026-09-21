@@ -179,13 +179,17 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.90,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
+    return DefaultTextStyle.merge(
+      style: const TextStyle(color: AppColors.pureWhite),
+      child: IconTheme(
+        data: const IconThemeData(color: AppColors.brightCyan),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.90,
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface : AppColors.deepNavy,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
         children: [
           // Drag handle
           Container(
@@ -193,7 +197,7 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
             width: 44,
             height: 5,
             decoration: BoxDecoration(
-              color: isDark ? Colors.white24 : Colors.black12,
+              color: isDark ? AppColors.darkBorder : AppColors.lightCyan.withAlpha(90),
               borderRadius: BorderRadius.circular(10),
             ),
           ),
@@ -206,12 +210,12 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withAlpha(30),
+                    color: AppColors.brightCyan.withAlpha(40),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.pin_drop_rounded,
-                    color: AppColors.primary,
+                    color: AppColors.brightCyan,
                     size: 22,
                   ),
                 ),
@@ -231,7 +235,7 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                         'Tap map or use one-tap auto GPS',
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.lightTextSecondary,
+                          color: AppColors.lightCyan,
                         ),
                       ),
                     ],
@@ -386,8 +390,8 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                     child: FloatingActionButton.small(
                       heroTag: 'picker_gps_fab',
                       backgroundColor:
-                          isDark ? AppColors.darkSurface : Colors.white,
-                      foregroundColor: AppColors.primary,
+                          isDark ? AppColors.darkSurface : AppColors.navyBlue,
+                      foregroundColor: AppColors.brightCyan,
                       onPressed: () => _detectCurrentLocation(),
                       tooltip: 'Snap to current location',
                       child: const Icon(Icons.gps_fixed_rounded, size: 20),
@@ -403,8 +407,8 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: (isDark ? Colors.black : Colors.white)
-                            .withAlpha(210),
+                        color: (isDark ? AppColors.darkNavy : AppColors.deepNavy)
+                            .withAlpha(230),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: const [
                           BoxShadow(
@@ -417,13 +421,16 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                       child: const Row(
                         children: [
                           Icon(Icons.touch_app_rounded,
-                              size: 16, color: AppColors.primary),
+                            size: 16, color: AppColors.brightCyan),
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Tap anywhere to reposition pin with auto place name',
                               style: TextStyle(
-                                  fontSize: 11, fontWeight: FontWeight.w500),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.pureWhite,
+                              ),
                             ),
                           ),
                         ],
@@ -495,6 +502,8 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
             ),
           ),
         ],
+          ),
+        ),
       ),
     );
   }

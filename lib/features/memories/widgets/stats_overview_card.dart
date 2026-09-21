@@ -23,12 +23,12 @@ class StatsOverviewCard extends StatelessWidget {
         gradient: LinearGradient(
           colors: isDark
               ? [
-                  const Color(0xFF0C234E),
-                  const Color(0xFF071A3D),
+                  AppColors.darkSurfaceVariant,
+                  AppColors.darkSurface,
                 ]
               : [
-                  const Color(0xFFE8F4FD),
-                  const Color(0xFFF4F8FC),
+                  AppColors.lightSurfaceVariant,
+                  AppColors.lightSurface,
                 ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -36,13 +36,13 @@ class StatsOverviewCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isDark
-              ? AppColors.primary.withAlpha(50)
-              : AppColors.primary.withAlpha(40),
+              ? AppColors.darkBorder
+              : AppColors.lightBorder,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(isDark ? 50 : 15),
+            color: (isDark ? Colors.black : AppColors.deepNavy).withAlpha(isDark ? 60 : 15),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -136,7 +136,7 @@ class StatsOverviewCard extends StatelessWidget {
                 title: 'Places',
                 count: stats.placesCount.toString(),
                 icon: Icons.place_rounded,
-                color: AppColors.tertiary,
+                color: isDark ? AppColors.brightCyan : AppColors.primaryBlue,
                 isDark: isDark,
               ),
             ],

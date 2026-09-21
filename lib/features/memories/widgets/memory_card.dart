@@ -222,11 +222,16 @@ class MemoryCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: (isDark
-                                        ? AppColors.tertiary
-                                        : AppColors.tertiaryContainer)
-                                    .withAlpha(40),
+                                color: isDark
+                                    ? AppColors.darkElevated.withAlpha(150)
+                                    : AppColors.secondaryContainer.withAlpha(140),
                                 borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isDark
+                                      ? AppColors.darkBorder
+                                      : AppColors.lightBorder,
+                                  width: 0.8,
+                                ),
                               ),
                               child: Text(
                                 '#$tag',
@@ -235,7 +240,7 @@ class MemoryCard extends StatelessWidget {
                                   fontWeight: FontWeight.w600,
                                   color: isDark
                                       ? AppColors.brightCyan
-                                      : AppColors.tertiary,
+                                      : AppColors.primaryBlue,
                                 ),
                               ),
                             ),

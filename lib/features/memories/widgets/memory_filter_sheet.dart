@@ -215,7 +215,7 @@ class _MemoryFilterSheetState extends ConsumerState<MemoryFilterSheet> {
                       selected: _favoritesOnly,
                       avatar: const Text('⭐', style: TextStyle(fontSize: 14)),
                       label: const Text('Favorites only'),
-                      selectedColor: AppColors.primaryContainer,
+                      selectedColor: isDark ? AppColors.darkElevated : AppColors.lightCyan,
                       onSelected: (selected) {
                         setState(() => _favoritesOnly = selected);
                       },
@@ -224,7 +224,7 @@ class _MemoryFilterSheetState extends ConsumerState<MemoryFilterSheet> {
                       selected: _hasLocationOnly,
                       avatar: const Text('📍', style: TextStyle(fontSize: 14)),
                       label: const Text('Memories with location'),
-                      selectedColor: AppColors.primaryContainer,
+                      selectedColor: isDark ? AppColors.darkElevated : AppColors.lightCyan,
                       onSelected: (selected) {
                         setState(() => _hasLocationOnly = selected);
                       },
@@ -233,7 +233,7 @@ class _MemoryFilterSheetState extends ConsumerState<MemoryFilterSheet> {
                       selected: _hasPhotoOnly,
                       avatar: const Text('📷', style: TextStyle(fontSize: 14)),
                       label: const Text('Memories with photo'),
-                      selectedColor: AppColors.primaryContainer,
+                      selectedColor: isDark ? AppColors.darkElevated : AppColors.lightCyan,
                       onSelected: (selected) {
                         setState(() => _hasPhotoOnly = selected);
                       },
@@ -306,7 +306,8 @@ class _MemoryFilterSheetState extends ConsumerState<MemoryFilterSheet> {
                       child: FilledButton(
                         onPressed: _applyAndClose,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: isDark ? AppColors.brightCyan : AppColors.primaryBlue,
+                          foregroundColor: isDark ? AppColors.darkNavy : Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),

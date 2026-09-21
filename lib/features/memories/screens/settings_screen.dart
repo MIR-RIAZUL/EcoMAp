@@ -68,7 +68,7 @@ class SettingsScreen extends ConsumerWidget {
             SizedBox(height: 12),
             Text(
               'Version 1.0.0 • Built with Flutter & Drift',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: AppColors.lightCyan),
             ),
           ],
         ),
@@ -202,7 +202,7 @@ class SettingsScreen extends ConsumerWidget {
                   height: 1,
                   indent: 16,
                   endIndent: 16,
-                  color: isDark ? Colors.white12 : Colors.black12,
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                 ),
                 ListTile(
                   leading: const Icon(Icons.delete_forever_rounded,
@@ -238,7 +238,7 @@ class SettingsScreen extends ConsumerWidget {
                   height: 1,
                   indent: 16,
                   endIndent: 16,
-                  color: isDark ? Colors.white12 : Colors.black12,
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                 ),
                 const ListTile(
                   leading: Icon(Icons.tag_rounded),

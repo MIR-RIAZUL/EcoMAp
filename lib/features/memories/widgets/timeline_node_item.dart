@@ -196,7 +196,7 @@ class TimelineNodeItem extends StatelessWidget {
                                         fontWeight: FontWeight.bold,
                                         color: isDark
                                             ? AppColors.brightCyan
-                                            : AppColors.tertiary,
+                                            : AppColors.primaryBlue,
                                       ),
                                     ),
                                   ),

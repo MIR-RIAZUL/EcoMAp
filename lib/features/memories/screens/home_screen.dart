@@ -94,13 +94,17 @@ class HomeScreen extends ConsumerWidget {
                             Container(
                               padding: const EdgeInsets.all(7),
                               decoration: BoxDecoration(
-                                color: AppColors.primary,
+                                color: isDark ? AppColors.navyBlue : AppColors.deepNavy,
                                 borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppColors.brightCyan.withAlpha(120),
+                                  width: 1,
+                                ),
                               ),
                               child: const Icon(
                                 Icons.explore_rounded,
                                 size: 18,
-                                color: Colors.white,
+                                color: AppColors.brightCyan,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -330,11 +334,23 @@ class HomeScreen extends ConsumerWidget {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [
+                                  AppColors.navyBlue,
+                                  AppColors.primaryBlue,
+                                ]
+                              : [
+                                  AppColors.deepNavy,
+                                  AppColors.primaryBlue,
+                                ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withAlpha(90),
+                            color: AppColors.deepNavy.withAlpha(isDark ? 80 : 50),
                             blurRadius: 14,
                             offset: const Offset(0, 4),
                           ),
@@ -345,12 +361,16 @@ class HomeScreen extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: Colors.white.withAlpha(50),
+                              color: AppColors.brightCyan.withAlpha(40),
                               shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.brightCyan.withAlpha(80),
+                                width: 1,
+                              ),
                             ),
                             child: const Icon(
                               Icons.add_rounded,
-                              color: Colors.white,
+                              color: AppColors.brightCyan,
                               size: 26,
                             ),
                           ),

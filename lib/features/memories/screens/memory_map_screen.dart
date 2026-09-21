@@ -235,8 +235,8 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: (isDark ? AppColors.darkSurface : AppColors.lightSurface)
-                        .withAlpha(235),
+                    color: (isDark ? AppColors.darkSurface : AppColors.deepNavy)
+                        .withAlpha(240),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -251,11 +251,11 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withAlpha(30),
+                          color: AppColors.brightCyan.withAlpha(40),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.map_rounded,
-                            color: AppColors.primary, size: 20),
+                            color: AppColors.brightCyan, size: 20),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -268,6 +268,7 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.bold,
+                                color: AppColors.pureWhite,
                               ),
                             ),
                             Text(
@@ -276,7 +277,7 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
                                   : '${localized.length} memory pin${localized.length == 1 ? '' : 's'}',
                               style: const TextStyle(
                                 fontSize: 11,
-                                color: AppColors.lightTextSecondary,
+                                color: AppColors.lightCyan,
                               ),
                             ),
                           ],
@@ -361,8 +362,8 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                 decoration: BoxDecoration(
-                  color: (isDark ? AppColors.darkSurface : AppColors.lightSurface)
-                      .withAlpha(240),
+                  color: (isDark ? AppColors.darkSurface : AppColors.deepNavy)
+                      .withAlpha(245),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: const [
                     BoxShadow(
@@ -375,12 +376,15 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
                 child: Row(
                   children: [
                     const Icon(Icons.info_outline_rounded,
-                        color: AppColors.primary),
+                        color: AppColors.brightCyan),
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
                         'No pinned memories. Tap "Pick on Map" when adding a memory to see pins here!',
-                        style: TextStyle(fontSize: 12),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.pureWhite,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),

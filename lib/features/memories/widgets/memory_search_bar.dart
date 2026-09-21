@@ -151,14 +151,14 @@ class _MemorySearchBarState extends ConsumerState<MemorySearchBar> {
                 height: 48,
                 decoration: BoxDecoration(
                   color: hasActiveFilter
-                      ? AppColors.primary
+                      ? (isDark ? AppColors.brightCyan : AppColors.primaryBlue)
                       : (isDark
                           ? AppColors.darkSurface
                           : AppColors.lightSurface),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: hasActiveFilter
-                        ? AppColors.primary
+                        ? (isDark ? AppColors.brightCyan : AppColors.primaryBlue)
                         : (isDark
                             ? AppColors.darkBorder
                             : AppColors.lightBorder),
@@ -166,7 +166,7 @@ class _MemorySearchBarState extends ConsumerState<MemorySearchBar> {
                   boxShadow: [
                     BoxShadow(
                       color: hasActiveFilter
-                          ? AppColors.primary.withAlpha(70)
+                          ? (isDark ? AppColors.brightCyan : AppColors.primaryBlue).withAlpha(80)
                           : Colors.black.withAlpha(isDark ? 25 : 8),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
@@ -180,7 +180,7 @@ class _MemorySearchBarState extends ConsumerState<MemorySearchBar> {
                       Icons.tune_rounded,
                       size: 20,
                       color: hasActiveFilter
-                          ? Colors.white
+                          ? (isDark ? AppColors.darkNavy : Colors.white)
                           : (isDark
                               ? AppColors.darkTextPrimary
                               : AppColors.lightTextPrimary),
@@ -191,8 +191,8 @@ class _MemorySearchBarState extends ConsumerState<MemorySearchBar> {
                         right: 8,
                         child: Container(
                           padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkNavy : Colors.white,
                             shape: BoxShape.circle,
                           ),
                           constraints: const BoxConstraints(
@@ -201,8 +201,8 @@ class _MemorySearchBarState extends ConsumerState<MemorySearchBar> {
                           ),
                           child: Text(
                             '$activeCount',
-                            style: const TextStyle(
-                              color: AppColors.primary,
+                            style: TextStyle(
+                              color: isDark ? AppColors.brightCyan : AppColors.primaryBlue,
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
                             ),
