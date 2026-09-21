@@ -168,46 +168,125 @@ class _TimelineScreenState extends ConsumerState<TimelineScreen> {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Month Subheader
+                                // Month Subheader with Memory Count
                                 Padding(
                                   padding: const EdgeInsets.only(
-                                      left: 12, top: 8, bottom: 8),
-                                  child: Text(
-                                    monthGroup.monthName,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark
-                                          ? AppColors.brightCyan
-                                          : AppColors.primary,
-                                      letterSpacing: 0.5,
-                                    ),
+                                      left: 12, top: 12, bottom: 8),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_month_rounded,
+                                        size: 16,
+                                        color: isDark
+                                            ? AppColors.brightCyan
+                                            : AppColors.primary,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        monthGroup.monthName,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark
+                                              ? AppColors.brightCyan
+                                              : AppColors.primary,
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 7, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: isDark
+                                              ? AppColors.navyBlue.withAlpha(160)
+                                              : AppColors.primary.withAlpha(25),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          '${monthGroup.allMemories.length}',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: isDark
+                                                ? AppColors.lightCyan
+                                                : AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
 
-                                // List of memory items in this month
-                                ...monthGroup.memories.asMap().entries.map(
-                                  (entry) {
-                                    final index = entry.key;
-                                    final memory = entry.value;
-                                    final isLast = index ==
-                                        monthGroup.memories.length - 1;
-
-                                    return TimelineNodeItem(
-                                      memory: memory,
-                                      isLast: isLast,
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) => MemoryDetailsScreen(
-                                              initialMemory: memory,
+                                // Day Groups within Month
+                                ...monthGroup.days.map((dayGroup) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Day Header Pill
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 20, top: 8, bottom: 6),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 8,
+                                              height: 8,
+                                              decoration: BoxDecoration(
+                                                color: AppColors.brightCyan,
+                                                shape: BoxShape.circle,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppColors.brightCyan
+                                                        .withAlpha(120),
+                                                    blurRadius: 4,
+                                                    spreadRadius: 1,
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              dayGroup.weekdayLabel,
+                                              style: TextStyle(
+                                                fontSize: 12.5,
+                                                fontWeight: FontWeight.w600,
+                                                color: isDark
+                                                    ? AppColors.lightCyan
+                                                    : AppColors.deepNavy,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      // Memories on this Date
+                                      ...dayGroup.memories.asMap().entries.map(
+                                        (entry) {
+                                          final index = entry.key;
+                                          final memory = entry.value;
+                                          final isLast = index ==
+                                              dayGroup.memories.length - 1;
+
+                                          return TimelineNodeItem(
+                                            memory: memory,
+                                            isLast: isLast,
+                                            onTap: () {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      MemoryDetailsScreen(
+                                                    initialMemory: memory,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                }),
                               ],
                             );
                           }),

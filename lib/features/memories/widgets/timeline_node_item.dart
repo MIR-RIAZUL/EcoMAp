@@ -27,29 +27,30 @@ class TimelineNodeItem extends StatelessWidget {
         children: [
           // Timeline Line and Mood Node
           SizedBox(
-            width: 48,
+            width: 44,
             child: Column(
               children: [
-                // Top line
+                // Top vertical connector line
                 Container(
-                  width: 2.5,
-                  height: 16,
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                  width: 2,
+                  height: 14,
+                  color: isDark ? AppColors.navyBlue : AppColors.lightBorder,
                 ),
-                // Mood Circle
+                // Mood Circle Indicator
                 Container(
-                  width: 34,
-                  height: 34,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: memory.mood.getBackgroundColor(isDark),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: memory.mood.color,
-                      width: 2.5,
+                      color: isDark ? AppColors.brightCyan : memory.mood.color,
+                      width: 2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: memory.mood.color.withAlpha(isDark ? 50 : 80),
+                        color: (isDark ? AppColors.brightCyan : memory.mood.color)
+                            .withAlpha(isDark ? 60 : 70),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -58,14 +59,14 @@ class TimelineNodeItem extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Text(
                     memory.mood.emoji,
-                    style: const TextStyle(fontSize: 15),
+                    style: const TextStyle(fontSize: 14),
                   ),
                 ),
-                // Bottom line
+                // Bottom vertical connector line
                 Expanded(
                   child: Container(
-                    width: isLast ? 0 : 2.5,
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    width: isLast ? 0 : 2,
+                    color: isDark ? AppColors.navyBlue : AppColors.lightBorder,
                   ),
                 ),
               ],
@@ -75,7 +76,7 @@ class TimelineNodeItem extends StatelessWidget {
           // Content Card
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 16, right: 16, left: 4),
+              padding: const EdgeInsets.only(bottom: 14, right: 8, left: 4),
               child: Card(
                 elevation: 1.5,
                 shape: RoundedRectangleBorder(
@@ -89,28 +90,58 @@ class TimelineNodeItem extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                   onTap: onTap,
                   child: Padding(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Date and Favorite Row
+                        // Time, Mood Label & Favorite
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              DateFormatter.formatDateTime(memory.dateTime),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: isDark
-                                    ? AppColors.darkTextSecondary
-                                    : AppColors.lightTextSecondary,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.access_time_rounded,
+                                  size: 13,
+                                  color: isDark
+                                      ? AppColors.brightCyan
+                                      : AppColors.primary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  DateFormatter.formatTime(memory.dateTime),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? AppColors.lightCyan
+                                        : AppColors.deepNavy,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: memory.mood.getBackgroundColor(isDark),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    memory.mood.label,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: memory.mood.color,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             if (memory.isFavorite)
                               const Icon(
                                 Icons.favorite_rounded,
-                                size: 16,
+                                size: 15,
                                 color: AppColors.favorite,
                               ),
                           ],
@@ -121,13 +152,13 @@ class TimelineNodeItem extends StatelessWidget {
                         Text(
                           memory.title,
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
                             letterSpacing: -0.2,
                           ),
                         ),
 
-                        // Description
+                        // Description preview
                         if (memory.description != null &&
                             memory.description!.trim().isNotEmpty) ...[
                           const SizedBox(height: 4),
@@ -136,7 +167,7 @@ class TimelineNodeItem extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12.5,
                               color: isDark
                                   ? AppColors.darkTextSecondary
                                   : AppColors.lightTextSecondary,
@@ -150,11 +181,14 @@ class TimelineNodeItem extends StatelessWidget {
                           const SizedBox(height: 10),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.file(
-                              File(memory.photoPath!),
-                              height: 120,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
+                            child: Hero(
+                              tag: 'memory_image_${memory.id}',
+                              child: Image.file(
+                                File(memory.photoPath!),
+                                height: 120,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         ],
@@ -163,7 +197,7 @@ class TimelineNodeItem extends StatelessWidget {
                         if ((memory.locationName != null &&
                                 memory.locationName!.isNotEmpty) ||
                             memory.tags.isNotEmpty) ...[
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
                           Wrap(
                             spacing: 6,
                             runSpacing: 4,
@@ -173,22 +207,33 @@ class TimelineNodeItem extends StatelessWidget {
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.place_rounded,
-                                        size: 13, color: AppColors.primary),
+                                    Icon(
+                                      Icons.place_rounded,
+                                      size: 13,
+                                      color: isDark
+                                          ? AppColors.brightCyan
+                                          : AppColors.primary,
+                                    ),
                                     const SizedBox(width: 3),
-                                    Text(
-                                      memory.locationName!,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w500,
-                                        color: isDark
-                                            ? AppColors.darkTextSecondary
-                                            : AppColors.lightTextSecondary,
+                                    ConstrainedBox(
+                                      constraints:
+                                          const BoxConstraints(maxWidth: 160),
+                                      child: Text(
+                                        memory.locationName!,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                          color: isDark
+                                              ? AppColors.darkTextSecondary
+                                              : AppColors.lightTextSecondary,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
-                              ...memory.tags.take(2).map(
+                              ...memory.tags.take(3).map(
                                     (tag) => Text(
                                       '#$tag',
                                       style: TextStyle(

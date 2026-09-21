@@ -239,22 +239,52 @@ final memoryStatsProvider = Provider<MemoryStats>((ref) {
   );
 });
 
-// Timeline structure
-class TimelineMonthGroup {
-  final String monthName;
+// Timeline structure: Year -> Month -> Date -> Memories
+class TimelineDayGroup {
+  final DateTime dayDate;
+  final String dayLabel; // e.g. "19 Sep"
+  final String weekdayLabel; // e.g. "Fri, 19 Sep"
   final List<MemoryItem> memories;
 
-  TimelineMonthGroup({required this.monthName, required this.memories});
+  TimelineDayGroup({
+    required this.dayDate,
+    required this.dayLabel,
+    required this.weekdayLabel,
+    required this.memories,
+  });
+}
+
+class TimelineMonthGroup {
+  final String monthName;
+  final int monthNumber;
+  final List<TimelineDayGroup> days;
+
+  TimelineMonthGroup({
+    required this.monthName,
+    required this.monthNumber,
+    required this.days,
+  });
+
+  List<MemoryItem> get allMemories =>
+      days.expand((day) => day.memories).toList();
 }
 
 class TimelineYearGroup {
   final String year;
+  final int yearNumber;
   final List<TimelineMonthGroup> months;
 
-  TimelineYearGroup({required this.year, required this.months});
+  TimelineYearGroup({
+    required this.year,
+    required this.yearNumber,
+    required this.months,
+  });
+
+  int get totalMemories =>
+      months.fold(0, (sum, m) => sum + m.allMemories.length);
 }
 
-// Timeline grouped memories provider with search and mood filtering
+// Timeline grouped memories provider with search and mood filtering (Year -> Month -> Date)
 final timelineGroupsProvider = Provider<List<TimelineYearGroup>>((ref) {
   final allAsync = ref.watch(allMemoriesStreamProvider);
   final query = ref.watch(searchQueryProvider).trim().toLowerCase();
@@ -283,29 +313,115 @@ final timelineGroupsProvider = Provider<List<TimelineYearGroup>>((ref) {
         filtered = filtered.where((m) => m.mood == moodFilter).toList();
       }
 
-      // Group by Year -> Month (preserve sorted order — insertion order = newest first)
-      final Map<String, Map<String, List<MemoryItem>>> grouped =
-          {};
+      // Group by Year -> Month -> Date (preserve sorted order — insertion order = newest first)
+      final Map<int, Map<int, Map<int, List<MemoryItem>>>> grouped = {};
 
       for (final memory in filtered) {
-        final year = DateFormatter.formatYear(memory.dateTime);
-        final month = DateFormatter.formatMonth(memory.dateTime);
+        final year = memory.dateTime.year;
+        final month = memory.dateTime.month;
+        final day = memory.dateTime.day;
 
         grouped.putIfAbsent(year, () => {});
-        grouped[year]!.putIfAbsent(month, () => []);
-        grouped[year]![month]!.add(memory);
+        grouped[year]!.putIfAbsent(month, () => {});
+        grouped[year]![month]!.putIfAbsent(day, () => []);
+        grouped[year]![month]![day]!.add(memory);
       }
 
       final List<TimelineYearGroup> result = [];
-      grouped.forEach((year, monthsMap) {
+
+      // Sort years descending
+      final sortedYears = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+
+      for (final year in sortedYears) {
+        final monthsMap = grouped[year]!;
+        final sortedMonths = monthsMap.keys.toList()..sort((a, b) => b.compareTo(a));
         final List<TimelineMonthGroup> monthGroups = [];
-        monthsMap.forEach((month, items) {
-          monthGroups.add(TimelineMonthGroup(monthName: month, memories: items));
-        });
-        result.add(TimelineYearGroup(year: year, months: monthGroups));
-      });
+
+        for (final month in sortedMonths) {
+          final daysMap = monthsMap[month]!;
+          final sortedDays = daysMap.keys.toList()..sort((a, b) => b.compareTo(a));
+          final List<TimelineDayGroup> dayGroups = [];
+
+          String monthName = '';
+          for (final day in sortedDays) {
+            final items = daysMap[day]!;
+            final firstDate = items.first.dateTime;
+            monthName = DateFormatter.formatMonth(firstDate);
+
+            dayGroups.add(
+              TimelineDayGroup(
+                dayDate: firstDate,
+                dayLabel: DateFormatter.formatDayMonth(firstDate),
+                weekdayLabel: DateFormatter.formatWeekdayDay(firstDate),
+                memories: items,
+              ),
+            );
+          }
+
+          monthGroups.add(
+            TimelineMonthGroup(
+              monthName: monthName.isNotEmpty
+                  ? monthName
+                  : DateFormatter.formatMonth(DateTime(year, month)),
+              monthNumber: month,
+              days: dayGroups,
+            ),
+          );
+        }
+
+        result.add(
+          TimelineYearGroup(
+            year: year.toString(),
+            yearNumber: year,
+            months: monthGroups,
+          ),
+        );
+      }
 
       return result;
+    },
+    orElse: () => [],
+  );
+});
+
+// --- On This Day Feature ---
+
+class OnThisDayMemory {
+  final MemoryItem memory;
+  final int yearsAgo;
+  final String yearsAgoLabel;
+
+  const OnThisDayMemory({
+    required this.memory,
+    required this.yearsAgo,
+    required this.yearsAgoLabel,
+  });
+}
+
+// Provider to find all memories from previous years matching today's month and day
+final onThisDayMemoriesProvider = Provider<List<OnThisDayMemory>>((ref) {
+  final allAsync = ref.watch(allMemoriesStreamProvider);
+  final now = DateTime.now();
+
+  return allAsync.maybeWhen(
+    data: (memories) {
+      final matches = memories.where((m) {
+        return m.dateTime.month == now.month &&
+            m.dateTime.day == now.day &&
+            m.dateTime.year < now.year;
+      }).toList();
+
+      matches.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+
+      return matches.map((m) {
+        final years = now.year - m.dateTime.year;
+        final label = years == 1 ? '1 year ago' : '$years years ago';
+        return OnThisDayMemory(
+          memory: m,
+          yearsAgo: years,
+          yearsAgoLabel: label,
+        );
+      }).toList();
     },
     orElse: () => [],
   );

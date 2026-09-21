@@ -10,7 +10,9 @@ import '../providers/database_provider.dart';
 import '../providers/memory_providers.dart';
 import '../widgets/memory_card.dart';
 import '../widgets/memory_search_bar.dart';
+import '../widgets/on_this_day_card.dart';
 import '../widgets/stats_overview_card.dart';
+import '../widgets/surprise_me_dialog.dart';
 import 'add_memory_screen.dart';
 import 'memory_details_screen.dart';
 
@@ -30,39 +32,10 @@ class HomeScreen extends ConsumerWidget {
 
     if (!context.mounted) return;
 
-    if (randomMemory == null) {
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          icon: const Icon(Icons.auto_awesome_rounded,
-              size: 36, color: AppColors.primary),
-          title: const Text('No Memories Yet'),
-          content: const Text(
-            'Create your first memory to unlock the Surprise Me nostalgia feature!',
-            textAlign: TextAlign.center,
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const AddMemoryScreen(),
-                  ),
-                );
-              },
-              child: const Text('Capture First Memory'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => MemoryDetailsScreen(initialMemory: randomMemory),
-        ),
-      );
-    }
+    await SurpriseMeDialog.show(
+      context: context,
+      memory: randomMemory,
+    );
   }
 
   @override
@@ -70,6 +43,7 @@ class HomeScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final allMemoriesAsync = ref.watch(allMemoriesStreamProvider);
     final favoriteMemoriesAsync = ref.watch(favoriteMemoriesStreamProvider);
+    final onThisDayMemories = ref.watch(onThisDayMemoriesProvider);
     final stats = ref.watch(memoryStatsProvider);
     final filterState = ref.watch(memoryFilterProvider);
     final filteredMemories = ref.watch(filteredMemoriesProvider);
@@ -409,6 +383,12 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+
+              // On This Day Flashback Section (Update 5)
+              if (onThisDayMemories.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: OnThisDayCard(memories: onThisDayMemories),
+                ),
 
               // Favorite Memories Carousel Section
               favoriteMemoriesAsync.when(

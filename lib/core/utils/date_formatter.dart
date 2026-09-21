@@ -29,6 +29,26 @@ class DateFormatter {
     return DateFormat('MMM d').format(dateTime);
   }
 
+  static String formatDayMonth(DateTime dateTime) {
+    return DateFormat('d MMM').format(dateTime);
+  }
+
+  static String formatWeekdayDay(DateTime dateTime) {
+    return DateFormat('EEE, d MMM').format(dateTime);
+  }
+
+  static String formatDayNumber(DateTime dateTime) {
+    return DateFormat('d').format(dateTime);
+  }
+
+  static String formatYearsAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final years = now.year - dateTime.year;
+    if (years <= 0) return 'This year';
+    if (years == 1) return '1 year ago';
+    return '$years years ago';
+  }
+
   static String formatRelative(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
