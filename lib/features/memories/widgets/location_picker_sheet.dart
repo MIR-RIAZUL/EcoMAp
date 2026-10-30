@@ -326,6 +326,9 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                       TileLayer(
                         urlTemplate: AppConstants.mapTileUrl,
                         userAgentPackageName: AppConstants.mapPackageUserAgent,
+                        tileProvider: NetworkTileProvider(
+                          headers: AppConstants.mapTileHeaders,
+                        ),
                         tileBuilder: isDark
                             ? (context, tileWidget, tile) => ColorFiltered(
                                   colorFilter: const ColorFilter.matrix(AppConstants.darkMapMatrix),

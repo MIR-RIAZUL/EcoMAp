@@ -156,6 +156,9 @@ class _MemoryMapScreenState extends ConsumerState<MemoryMapScreen> {
               TileLayer(
                 urlTemplate: AppConstants.mapTileUrl,
                 userAgentPackageName: AppConstants.mapPackageUserAgent,
+                tileProvider: NetworkTileProvider(
+                  headers: AppConstants.mapTileHeaders,
+                ),
                 tileBuilder: isDark
                     ? (context, tileWidget, tile) => ColorFiltered(
                           colorFilter: const ColorFilter.matrix(AppConstants.darkMapMatrix),

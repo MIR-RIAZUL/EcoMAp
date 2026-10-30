@@ -383,6 +383,9 @@ class _MemoryDetailsScreenState extends ConsumerState<MemoryDetailsScreen> {
                                   urlTemplate: AppConstants.mapTileUrl,
                                   userAgentPackageName:
                                       AppConstants.mapPackageUserAgent,
+                                  tileProvider: NetworkTileProvider(
+                                    headers: AppConstants.mapTileHeaders,
+                                  ),
                                   tileBuilder: isDark
                                       ? (context, tileWidget, tile) =>
                                           ColorFiltered(

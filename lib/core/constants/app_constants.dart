@@ -6,6 +6,9 @@ class AppConstants {
   // Standard OpenStreetMap configuration (100% free, no API key required)
   static const String mapTileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   static const String mapPackageUserAgent = 'com.echomap.app.echomap';
+  static Map<String, String> get mapTileHeaders => <String, String>{
+        'User-Agent': 'EchoMap/1.0 (com.echomap.app.echomap)',
+      };
   static const double defaultLatitude = 23.7985; // Pleasant default
   static const double defaultLongitude = 90.4497;
   static const double defaultZoom = 13.0;
