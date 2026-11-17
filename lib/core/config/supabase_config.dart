@@ -33,11 +33,26 @@ class SupabaseConfig {
       _activeAnonKey.trim().isNotEmpty &&
       !_activeUrl.contains('your-project-id');
 
+  /// Normalizes Supabase project URL by removing trailing slashes or accidental `/rest/v1` suffixes
+  static String normalizeUrl(String raw) {
+    var u = raw.trim();
+    while (u.endsWith('/')) {
+      u = u.substring(0, u.length - 1);
+    }
+    if (u.endsWith('/rest/v1')) {
+      u = u.substring(0, u.length - '/rest/v1'.length);
+    }
+    while (u.endsWith('/')) {
+      u = u.substring(0, u.length - 1);
+    }
+    return u;
+  }
+
   /// Initialize config from dart-define, local `.env` file, and SharedPreferences
   static Future<void> initialize() async {
     if (_initialized) return;
 
-    String resolvedUrl = envUrl.trim();
+    String resolvedUrl = normalizeUrl(envUrl);
     String resolvedAnonKey = envAnonKey.trim();
 
     // If not supplied via --dart-define, attempt reading from local `.env` file
@@ -54,7 +69,7 @@ class SupabaseConfig {
               final key = trimmed.substring(0, eqIndex).trim();
               final val = trimmed.substring(eqIndex + 1).trim();
               if (key == 'SUPABASE_URL' && resolvedUrl.isEmpty) {
-                resolvedUrl = val;
+                resolvedUrl = normalizeUrl(val);
               } else if (key == 'SUPABASE_ANON_KEY' && resolvedAnonKey.isEmpty) {
                 resolvedAnonKey = val;
               }
@@ -73,7 +88,7 @@ class SupabaseConfig {
       final savedAnonKey = prefs.getString(_prefAnonKey);
 
       if (savedUrl != null && savedUrl.isNotEmpty) {
-        resolvedUrl = savedUrl;
+        resolvedUrl = normalizeUrl(savedUrl);
       }
       if (savedAnonKey != null && savedAnonKey.isNotEmpty) {
         resolvedAnonKey = savedAnonKey;
@@ -90,7 +105,7 @@ class SupabaseConfig {
     required String url,
     required String anonKey,
   }) async {
-    _activeUrl = url.trim();
+    _activeUrl = normalizeUrl(url);
     _activeAnonKey = anonKey.trim();
 
     try {

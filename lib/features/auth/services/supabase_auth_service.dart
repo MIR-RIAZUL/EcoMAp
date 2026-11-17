@@ -124,6 +124,8 @@ class SupabaseAuthService {
     } else if (message.contains('user already registered') ||
         message.contains('email already in use')) {
       return 'An account with this email already exists. Please sign in instead.';
+    } else if (message.contains('email not confirmed')) {
+      return 'Your email address has not been confirmed yet. Please check your inbox for the confirmation link.';
     } else if (message.contains('password should be at least')) {
       return 'Password must be at least 6 characters.';
     } else if (message.contains('rate limit')) {
