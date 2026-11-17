@@ -10,7 +10,18 @@ class AppDatabase extends _$AppDatabase {
       : super(executor ?? driftDatabase(name: 'echomap_db'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(memories, memories.cloudId);
+            await m.addColumn(memories, memories.updatedAt);
+          }
+        },
+      );
 
   // Stream all memories ordered by dateTime descending
   Stream<List<Memory>> watchAllMemories() {
@@ -33,6 +44,11 @@ class AppDatabase extends _$AppDatabase {
   // Get memory by ID
   Future<Memory?> getMemoryById(int id) {
     return (select(memories)..where((m) => m.id.equals(id))).getSingleOrNull();
+  }
+
+  // Get memory by Cloud UUID
+  Future<Memory?> getMemoryByCloudId(String cloudId) {
+    return (select(memories)..where((m) => m.cloudId.equals(cloudId))).getSingleOrNull();
   }
 
   // Insert a new memory
