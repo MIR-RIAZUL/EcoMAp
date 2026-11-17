@@ -44,4 +44,24 @@ class FileHelper {
     if (filePath == null || filePath.isEmpty) return false;
     return File(filePath).existsSync();
   }
+
+  /// Saves downloaded image bytes to the app's local documents directory.
+  static Future<String?> saveImageBytes(List<int> bytes, String fileName) async {
+    try {
+      final appDocDir = await getApplicationDocumentsDirectory();
+      final imagesDir = Directory(p.join(appDocDir.path, 'memory_images'));
+
+      if (!await imagesDir.exists()) {
+        await imagesDir.create(recursive: true);
+      }
+
+      final sanitizedName = p.basename(fileName);
+      final targetPath = p.join(imagesDir.path, sanitizedName);
+      final targetFile = File(targetPath);
+      await targetFile.writeAsBytes(bytes);
+      return targetFile.path;
+    } catch (_) {
+      return null;
+    }
+  }
 }
