@@ -13,4 +13,6 @@ class Memories extends Table {
   TextColumn get tags => text().withDefault(const Constant(''))();
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get cloudId => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
 }
