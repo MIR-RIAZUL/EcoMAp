@@ -142,6 +142,28 @@ class $MemoriesTable extends Memories with TableInfo<$MemoriesTable, Memory> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _cloudIdMeta = const VerificationMeta(
+    'cloudId',
+  );
+  @override
+  late final GeneratedColumn<String> cloudId = GeneratedColumn<String>(
+    'cloud_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -156,6 +178,8 @@ class $MemoriesTable extends Memories with TableInfo<$MemoriesTable, Memory> {
     tags,
     isFavorite,
     createdAt,
+    cloudId,
+    updatedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -250,6 +274,18 @@ class $MemoriesTable extends Memories with TableInfo<$MemoriesTable, Memory> {
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('cloud_id')) {
+      context.handle(
+        _cloudIdMeta,
+        cloudId.isAcceptableOrUnknown(data['cloud_id']!, _cloudIdMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -307,6 +343,14 @@ class $MemoriesTable extends Memories with TableInfo<$MemoriesTable, Memory> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      cloudId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cloud_id'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      ),
     );
   }
 
@@ -329,6 +373,8 @@ class Memory extends DataClass implements Insertable<Memory> {
   final String tags;
   final bool isFavorite;
   final DateTime createdAt;
+  final String? cloudId;
+  final DateTime? updatedAt;
   const Memory({
     required this.id,
     required this.title,
@@ -342,6 +388,8 @@ class Memory extends DataClass implements Insertable<Memory> {
     required this.tags,
     required this.isFavorite,
     required this.createdAt,
+    this.cloudId,
+    this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -368,6 +416,12 @@ class Memory extends DataClass implements Insertable<Memory> {
     map['tags'] = Variable<String>(tags);
     map['is_favorite'] = Variable<bool>(isFavorite);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || cloudId != null) {
+      map['cloud_id'] = Variable<String>(cloudId);
+    }
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
     return map;
   }
 
@@ -395,6 +449,12 @@ class Memory extends DataClass implements Insertable<Memory> {
       tags: Value(tags),
       isFavorite: Value(isFavorite),
       createdAt: Value(createdAt),
+      cloudId: cloudId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cloudId),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
     );
   }
 
@@ -416,6 +476,8 @@ class Memory extends DataClass implements Insertable<Memory> {
       tags: serializer.fromJson<String>(json['tags']),
       isFavorite: serializer.fromJson<bool>(json['isFavorite']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      cloudId: serializer.fromJson<String?>(json['cloudId']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
     );
   }
   @override
@@ -434,6 +496,8 @@ class Memory extends DataClass implements Insertable<Memory> {
       'tags': serializer.toJson<String>(tags),
       'isFavorite': serializer.toJson<bool>(isFavorite),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'cloudId': serializer.toJson<String?>(cloudId),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
     };
   }
 
@@ -450,6 +514,8 @@ class Memory extends DataClass implements Insertable<Memory> {
     String? tags,
     bool? isFavorite,
     DateTime? createdAt,
+    Value<String?> cloudId = const Value.absent(),
+    Value<DateTime?> updatedAt = const Value.absent(),
   }) => Memory(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -463,6 +529,8 @@ class Memory extends DataClass implements Insertable<Memory> {
     tags: tags ?? this.tags,
     isFavorite: isFavorite ?? this.isFavorite,
     createdAt: createdAt ?? this.createdAt,
+    cloudId: cloudId.present ? cloudId.value : this.cloudId,
+    updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
   );
   Memory copyWithCompanion(MemoriesCompanion data) {
     return Memory(
@@ -486,6 +554,8 @@ class Memory extends DataClass implements Insertable<Memory> {
           ? data.isFavorite.value
           : this.isFavorite,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      cloudId: data.cloudId.present ? data.cloudId.value : this.cloudId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
 
@@ -503,7 +573,9 @@ class Memory extends DataClass implements Insertable<Memory> {
           ..write('mood: $mood, ')
           ..write('tags: $tags, ')
           ..write('isFavorite: $isFavorite, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('cloudId: $cloudId, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -522,6 +594,8 @@ class Memory extends DataClass implements Insertable<Memory> {
     tags,
     isFavorite,
     createdAt,
+    cloudId,
+    updatedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -538,7 +612,9 @@ class Memory extends DataClass implements Insertable<Memory> {
           other.mood == this.mood &&
           other.tags == this.tags &&
           other.isFavorite == this.isFavorite &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.cloudId == this.cloudId &&
+          other.updatedAt == this.updatedAt);
 }
 
 class MemoriesCompanion extends UpdateCompanion<Memory> {
@@ -554,6 +630,8 @@ class MemoriesCompanion extends UpdateCompanion<Memory> {
   final Value<String> tags;
   final Value<bool> isFavorite;
   final Value<DateTime> createdAt;
+  final Value<String?> cloudId;
+  final Value<DateTime?> updatedAt;
   const MemoriesCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -567,6 +645,8 @@ class MemoriesCompanion extends UpdateCompanion<Memory> {
     this.tags = const Value.absent(),
     this.isFavorite = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.cloudId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   });
   MemoriesCompanion.insert({
     this.id = const Value.absent(),
@@ -581,6 +661,8 @@ class MemoriesCompanion extends UpdateCompanion<Memory> {
     this.tags = const Value.absent(),
     this.isFavorite = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.cloudId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   }) : title = Value(title),
        memoryDate = Value(memoryDate),
        mood = Value(mood);
@@ -597,6 +679,8 @@ class MemoriesCompanion extends UpdateCompanion<Memory> {
     Expression<String>? tags,
     Expression<bool>? isFavorite,
     Expression<DateTime>? createdAt,
+    Expression<String>? cloudId,
+    Expression<DateTime>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -611,6 +695,8 @@ class MemoriesCompanion extends UpdateCompanion<Memory> {
       if (tags != null) 'tags': tags,
       if (isFavorite != null) 'is_favorite': isFavorite,
       if (createdAt != null) 'created_at': createdAt,
+      if (cloudId != null) 'cloud_id': cloudId,
+      if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
 
@@ -627,6 +713,8 @@ class MemoriesCompanion extends UpdateCompanion<Memory> {
     Value<String>? tags,
     Value<bool>? isFavorite,
     Value<DateTime>? createdAt,
+    Value<String?>? cloudId,
+    Value<DateTime?>? updatedAt,
   }) {
     return MemoriesCompanion(
       id: id ?? this.id,
@@ -641,6 +729,8 @@ class MemoriesCompanion extends UpdateCompanion<Memory> {
       tags: tags ?? this.tags,
       isFavorite: isFavorite ?? this.isFavorite,
       createdAt: createdAt ?? this.createdAt,
+      cloudId: cloudId ?? this.cloudId,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -683,6 +773,12 @@ class MemoriesCompanion extends UpdateCompanion<Memory> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (cloudId.present) {
+      map['cloud_id'] = Variable<String>(cloudId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
     return map;
   }
 
@@ -700,7 +796,9 @@ class MemoriesCompanion extends UpdateCompanion<Memory> {
           ..write('mood: $mood, ')
           ..write('tags: $tags, ')
           ..write('isFavorite: $isFavorite, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('cloudId: $cloudId, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -731,6 +829,8 @@ typedef $$MemoriesTableCreateCompanionBuilder =
       Value<String> tags,
       Value<bool> isFavorite,
       Value<DateTime> createdAt,
+      Value<String?> cloudId,
+      Value<DateTime?> updatedAt,
     });
 typedef $$MemoriesTableUpdateCompanionBuilder =
     MemoriesCompanion Function({
@@ -746,6 +846,8 @@ typedef $$MemoriesTableUpdateCompanionBuilder =
       Value<String> tags,
       Value<bool> isFavorite,
       Value<DateTime> createdAt,
+      Value<String?> cloudId,
+      Value<DateTime?> updatedAt,
     });
 
 class $$MemoriesTableFilterComposer
@@ -814,6 +916,16 @@ class $$MemoriesTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cloudId => $composableBuilder(
+    column: $table.cloudId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -886,6 +998,16 @@ class $$MemoriesTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get cloudId => $composableBuilder(
+    column: $table.cloudId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MemoriesTableAnnotationComposer
@@ -940,6 +1062,12 @@ class $$MemoriesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get cloudId =>
+      $composableBuilder(column: $table.cloudId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
 
 class $$MemoriesTableTableManager
@@ -982,6 +1110,8 @@ class $$MemoriesTableTableManager
                 Value<String> tags = const Value.absent(),
                 Value<bool> isFavorite = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> cloudId = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
               }) => MemoriesCompanion(
                 id: id,
                 title: title,
@@ -995,6 +1125,8 @@ class $$MemoriesTableTableManager
                 tags: tags,
                 isFavorite: isFavorite,
                 createdAt: createdAt,
+                cloudId: cloudId,
+                updatedAt: updatedAt,
               ),
           createCompanionCallback:
               ({
@@ -1010,6 +1142,8 @@ class $$MemoriesTableTableManager
                 Value<String> tags = const Value.absent(),
                 Value<bool> isFavorite = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> cloudId = const Value.absent(),
+                Value<DateTime?> updatedAt = const Value.absent(),
               }) => MemoriesCompanion.insert(
                 id: id,
                 title: title,
@@ -1023,6 +1157,8 @@ class $$MemoriesTableTableManager
                 tags: tags,
                 isFavorite: isFavorite,
                 createdAt: createdAt,
+                cloudId: cloudId,
+                updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
